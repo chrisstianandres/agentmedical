@@ -6,13 +6,13 @@
         <div class="row gx-4">
           <div class="col-auto">
             <div class="avatar avatar-xl position-relative">
-              <img src="{% static 'admin/assets/img/team-1.jpg' %}" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
+              <img src="{{ person.photo.url }}" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
             </div>
           </div>
           <div class="col-auto my-auto">
             <div class="h-100">
               <h5 class="mb-1">
-                Sayo Kravits
+                {{ person.full_name }}
               </h5>
               <p class="mb-0 font-weight-bold text-sm">
                 Public Relations
@@ -52,7 +52,7 @@
           <div class="card">
             <div class="card-header pb-0">
               <div class="d-flex align-items-center">
-                <p class="mb-0">Edit Profile</p>
+                <p class="mb-0">Reservar cita médica</p>
                 <button class="btn btn-primary btn-sm ms-auto">Settings</button>
               </div>
             </div>

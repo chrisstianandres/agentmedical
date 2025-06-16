@@ -8,6 +8,8 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.defaultfilters import first
 
+from apps.functions import add_data_session
+
 
 # Create your views here.
 # -*- coding: UTF-8 -*-
@@ -20,7 +22,9 @@ from django.template.defaultfilters import first
 @transaction.atomic()
 def view(request):
     data = {}
-    # persona = request.session['persona']
+    #
+    add_data_session(request, data)
+    data['person'] = request.session['person']
     if request.method == 'POST':
         action = request.POST['action']
 

@@ -78,6 +78,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agentmedical.wsgi.application'
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
