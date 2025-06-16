@@ -37,9 +37,10 @@ def view(request):
             action = request.GET['action']
             data['action'] = action
 
-            if action == 'gestionar':
+            if action == 'appointment':
                 try:
-                    data['title'] = u'Configurar Población'
+                    data['title'] = 'Reservar una cita médica'
+                    return render(request, "appointment.html", data)
                 except Exception as ex:
                     pass
 
