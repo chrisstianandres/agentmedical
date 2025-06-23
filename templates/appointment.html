@@ -59,69 +59,80 @@
             <div class="card-body">
               <p class="text-uppercase text-sm">User Information</p>
               <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Username</label>
-                    <input class="form-control" type="text" value="lucky.jesse">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Email address</label>
-                    <input class="form-control" type="email" value="jesse@example.com">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">First name</label>
-                    <input class="form-control" type="text" value="Jesse">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Last name</label>
-                    <input class="form-control" type="text" value="Lucky">
-                  </div>
-                </div>
+                  {% for field in form %}
+                  	    <div class="col-md-6">
+                            <div class="form-group">
+{#                                <label for="example-text-input" class="form-control-label">Username</label>#}
+                                <label for="id_{{ field.name }}" class="form-control-label">{{ field.label }}</label>
+                                {{ field }}
+                                <p class="help-text">{{ field.help_text }} </p>
+                            </div>
+                        </div>
+                  {% endfor %}
+                  
+{#                <div class="col-md-6">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Username</label>#}
+{#                    <input class="form-control" type="text" value="lucky.jesse">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-6">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Email address</label>#}
+{#                    <input class="form-control" type="email" value="jesse@example.com">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-6">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">First name</label>#}
+{#                    <input class="form-control" type="text" value="Jesse">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-6">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Last name</label>#}
+{#                    <input class="form-control" type="text" value="Lucky">#}
+{#                  </div>#}
+{#                </div>#}
               </div>
-              <hr class="horizontal dark">
-              <p class="text-uppercase text-sm">Contact Information</p>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Address</label>
-                    <input class="form-control" type="text" value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09">
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">City</label>
-                    <input class="form-control" type="text" value="New York">
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Country</label>
-                    <input class="form-control" type="text" value="United States">
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">Postal code</label>
-                    <input class="form-control" type="text" value="437300">
-                  </div>
-                </div>
-              </div>
-              <hr class="horizontal dark">
-              <p class="text-uppercase text-sm">About me</p>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label for="example-text-input" class="form-control-label">About me</label>
-                    <input class="form-control" type="text" value="A beautiful Dashboard for Bootstrap 5. It is Free and Open Source.">
-                  </div>
-                </div>
-              </div>
+{#              <hr class="horizontal dark">#}
+{#              <p class="text-uppercase text-sm">Contact Information</p>#}
+{#              <div class="row">#}
+{#                <div class="col-md-12">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Address</label>#}
+{#                    <input class="form-control" type="text" value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-4">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">City</label>#}
+{#                    <input class="form-control" type="text" value="New York">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-4">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Country</label>#}
+{#                    <input class="form-control" type="text" value="United States">#}
+{#                  </div>#}
+{#                </div>#}
+{#                <div class="col-md-4">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">Postal code</label>#}
+{#                    <input class="form-control" type="text" value="437300">#}
+{#                  </div>#}
+{#                </div>#}
+{#              </div>#}
+{#              <hr class="horizontal dark">#}
+{#              <p class="text-uppercase text-sm">About me</p>#}
+{#              <div class="row">#}
+{#                <div class="col-md-12">#}
+{#                  <div class="form-group">#}
+{#                    <label for="example-text-input" class="form-control-label">About me</label>#}
+{#                    <input class="form-control" type="text" value="A beautiful Dashboard for Bootstrap 5. It is Free and Open Source.">#}
+{#                  </div>#}
+{#                </div>#}
+{#              </div>#}
             </div>
           </div>
         </div>
@@ -183,4 +194,56 @@
         </div>
       </div>
     </div>
+{% endblock %}
+{% block extra_script %}
+    <script>
+     $('select').select2({
+        width: '100%'  // Ajusta el ancho para que ocupe el 100% del contenedor
+    });
+        $('#id_speciality').select2({
+            placeholder: "Seleccione una espcialidad",
+            allowClear: true
+        }).on('select2:select', function(e) {
+        var specialityId = e.params.data.id;
+        $.ajax({
+                url: '{{ request.path }}',  // La URL de tu vista en Django
+                method: 'GET',
+                data: {
+                    action: 'searchdoctorbyspeciality',  // La acción que estás solicitando
+                    id_speciality: specialityId  // El ID de la especialidad seleccionada
+                },
+                success: function(response) {
+                    // Si la respuesta es exitosa, actualizar Select2 con los resultados
+                    var doctorOptions = response.results;  // Resultados devueltos por Django
+
+                    // Vaciar el select de doctores y agregar las nuevas opciones
+                    $('#id_doctor').empty().trigger('change');
+                    
+                    // Añadir opciones al Select2
+                    doctorOptions.forEach(function(doctor) {
+                        let option = new Option(doctor.text, doctor.id, false, false);
+                        $('#id_doctor').append(option);
+                    });
+
+                    // Actualizar el Select2 para que se muestren las nuevas opciones
+                    $('#id_doctor').trigger('change');
+                },
+                error: function(xhr, status, error) {
+                    // Manejar cualquier error de la solicitud AJAX
+                    console.error("Error al cargar los doctores:", error);
+                }
+            });
+        
+    });
+        $("#id_doctor").select2({
+            language: {
+                noResults: function () {
+                    return "No se encontraron doctores";  // Mensaje cuando no hay resultados
+                }
+            },
+            placeholder: 'Selecione un doctor',
+            minimumInputLength: 1,
+            
+        });
+    </script>
 {% endblock %}

@@ -43,12 +43,28 @@ def view(request):
 
             if action == 'appointment':
                 try:
+                    from .forms import AppointmentForm
                     data['title'] = 'Reservar una cita médica'
+                    data['form'] = AppointmentForm()
                     return render(request, "appointment.html", data)
                 except Exception as ex:
                     pass
 
-            return HttpResponseRedirect(f"/adm_eventos_qr?info=No se encuenta esta accion")
+            elif action == 'searchdoctorbyspeciality':
+                try:
+                    from apps.medicalprofile.models import SpecialtyProfile
+                    id_speciality = request.GET.get('id_speciality', None)
+                    if not id_speciality:
+                        raise NameError('Debe elegir una espcialidad')
+                    doctors = SpecialtyProfile.objects.filter(status=True, specialty_id=id_speciality).select_related('specialty', 'profilemedical__person')
+                    results = [{'id': doctor.profilemedical_id, 'text': doctor.profilemedical.person.full_name()} for doctor in doctors]
+                    # Devolvemos la respuesta en el formato que espera Select2
+                    return JsonResponse({"results": results}, safe=False)
+
+                except Exception as ex:
+                    pass
+
+            return HttpResponseRedirect(f"?info=No se encuenta esta accion")
         else:
             try:
                 data['title'] = 'Pagina principal'

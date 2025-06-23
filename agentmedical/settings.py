@@ -78,9 +78,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agentmedical.wsgi.application'
 
+REDIS_HOST = 'localhost'
+REDIS_PASSWORD = ''
+REDIS_PORT = 6379
+REDIS_BD = 0
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+         'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BD}',
+    }
+}
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"  # Usar el caché definido anteriormente
 
-
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 3600  # Duración de la caché en segundos
+USER_AGENTS_CACHE = 'default'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
