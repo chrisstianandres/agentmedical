@@ -16,7 +16,9 @@
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
   <!-- Font Awesome Icons -->
-  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+{#  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>#}
+    <link rel="stylesheet" href="{% static 'assets/vendor/fontawesome-free/css/all.css' %}">
+    static/
   <!-- CSS Files -->
   <link id="pagestyle" href="{% static 'admin/assets/css/argon-dashboard.css' %}" rel="stylesheet" />
 </head>
@@ -684,7 +686,36 @@
     <!--   Select2   -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+      function set_select(data_dict, id_select_receptor){
+          $.ajax({
+                url: '{{ request.path }}',  // La URL de tu vista en Django
+                method: 'GET',
+                data: data_dict,
+                success: function(response) {
+                    // Si la respuesta es exitosa, actualizar Select2 con los resultados
+                    var doctorOptions = response.results;  // Resultados devueltos por Django
 
+                    // Vaciar el select de doctores y agregar las nuevas opciones
+                    $('#'+id_select_receptor).empty().trigger('change');
+                    
+                    // Añadir opciones al Select2
+                    doctorOptions.forEach(function(item) {
+                        let option = new Option(item.text, item.id, false, false);
+                        $('#'+id_select_receptor).append(option);
+                    });
+
+                    {#// Actualizar el Select2 para que se muestren las nuevas opciones#}
+                    {#$('#'+id_select_receptor).trigger('change');#}
+                    $('#'+id_select_receptor).val(null).trigger('change');
+                },
+                error: function(xhr, status, error) {
+                    // Manejar cualquier error de la solicitud AJAX
+                    console.error("Error al cargar los doctores:", error);
+                }
+            });
+      }
+  </script>
   {% block extra_script %}
       <script>
           var ctx1 = document.getElementById("chart-line").getContext("2d");

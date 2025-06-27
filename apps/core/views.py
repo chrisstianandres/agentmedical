@@ -7,6 +7,7 @@ from django.db import transaction
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.defaultfilters import first
+from pyexpat.errors import messages
 
 from apps.functions import add_data_session
 
@@ -63,6 +64,20 @@ def view(request):
 
                 except Exception as ex:
                     pass
+            elif action == 'getdoctorinfo':
+                try:
+                    from apps.medicalprofile.models import ProfileMedical
+                    id_doctor = request.GET.get('id_doctor', None)
+                    if not id_doctor:
+                        raise NameError('Debe elegir una espcialidad')
+                    doctor = ProfileMedical.objects.filter(status=True, id=id_doctor).select_related('person').first()
+                    person = doctor.person
+                    results = {'photo_doctor': person.get_photo(), 'name_doctor': person.full_name(), 'age': 45, 'front_page_card': person.get_front_page_card()}
+                    # Devolvemos la respuesta en el formato que espera Select2
+                    return JsonResponse({"data": results, 'display': True, 'message': 'ok'}, safe=False)
+
+                except Exception as ex:
+                    return JsonResponse({"data": [], 'display': False, 'message': f'{ex}'})
 
             return HttpResponseRedirect(f"?info=No se encuenta esta accion")
         else:

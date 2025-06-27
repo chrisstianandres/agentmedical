@@ -69,7 +69,7 @@
                             </div>
                         </div>
                   {% endfor %}
-                  
+
 {#                <div class="col-md-6">#}
 {#                  <div class="form-group">#}
 {#                    <label for="example-text-input" class="form-control-label">Username</label>#}
@@ -138,55 +138,53 @@
         </div>
         <div class="col-md-4">
           <div class="card card-profile">
-            <img src="{% static 'admin/assets/img/bg-profile.jpg' %}" alt="Image placeholder" class="card-img-top">
+            <img id="front_page_card" src="{% static 'admin/assets/img/portada_no_disponible.jpg' %}" alt="Image placeholder" class="card-img-top">
             <div class="row justify-content-center">
               <div class="col-4 col-lg-4 order-lg-2">
                 <div class="mt-n4 mt-lg-n6 mb-4 mb-lg-0">
                   <a href="javascript:;">
-                    <img src="{% static 'admin/assets/img/team-2.jpg' %}" class="rounded-circle img-fluid border border-2 border-white">
+                    <img id="photo_doctor" src="{% static 'admin/assets/img/no-profile.png' %}" class="rounded-circle img-fluid border border-2 border-white">
                   </a>
                 </div>
               </div>
             </div>
             <div class="card-header text-center border-0 pt-0 pt-lg-2 pb-4 pb-lg-3">
               <div class="d-flex justify-content-between">
-                <a href="javascript:;" class="btn btn-sm btn-info mb-0 d-none d-lg-block">Connect</a>
+                <a href="javascript:;" id="btn_more_info" class="btn btn-sm btn-off mb-0 d-none d-lg-block" disabled="disabled"><i class="fas fa-info-circle"></i> Más informacón</a>
                 <a href="javascript:;" class="btn btn-sm btn-info mb-0 d-block d-lg-none"><i class="ni ni-collection"></i></a>
-                <a href="javascript:;" class="btn btn-sm btn-dark float-right mb-0 d-none d-lg-block">Message</a>
+                <a href="javascript:;" id="btn_linkedin" class="btn btn-sm btn-off float-right mb-0 d-none d-lg-block"><i class="fab fa-linkedin"></i> Linkedin</a>
                 <a href="javascript:;" class="btn btn-sm btn-dark float-right mb-0 d-block d-lg-none"><i class="ni ni-email-83"></i></a>
               </div>
             </div>
             <div class="card-body pt-0">
-              <div class="row">
-                <div class="col">
-                  <div class="d-flex justify-content-center">
-                    <div class="d-grid text-center">
-                      <span class="text-lg font-weight-bolder">22</span>
-                      <span class="text-sm opacity-8">Friends</span>
-                    </div>
-                    <div class="d-grid text-center mx-4">
-                      <span class="text-lg font-weight-bolder">10</span>
-                      <span class="text-sm opacity-8">Photos</span>
-                    </div>
-                    <div class="d-grid text-center">
-                      <span class="text-lg font-weight-bolder">89</span>
-                      <span class="text-sm opacity-8">Comments</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+{#              <div class="row">#}
+{#                <div class="col">#}
+{#                  <div class="d-flex justify-content-center">#}
+{#                    <div class="d-grid text-center">#}
+{#                      <span class="text-lg font-weight-bolder">22</span>#}
+{#                      <span class="text-sm opacity-8">Friends</span>#}
+{#                    </div>#}
+{#                    <div class="d-grid text-center mx-4">#}
+{#                      <span class="text-lg font-weight-bolder">10</span>#}
+{#                      <span class="text-sm opacity-8">Photos</span>#}
+{#                    </div>#}
+{#                    <div class="d-grid text-center">#}
+{#                      <span class="text-lg font-weight-bolder">89</span>#}
+{#                      <span class="text-sm opacity-8">Comments</span>#}
+{#                    </div>#}
+{#                  </div>#}
+{#                </div>#}
+{#              </div>#}
               <div class="text-center mt-4">
-                <h5>
-                  Mark Davis<span class="font-weight-light">, 35</span>
-                </h5>
+                <h5 id="name_doctor">No seleccionado<span class="font-weight-light" id="age_doctor" style="display: none">, 0</span></h5>
                 <div class="h6 font-weight-300">
-                  <i class="ni location_pin mr-2"></i>Bucharest, Romania
+                  <i class="ni location_pin mr-2"></i><span id="country_doctor">No disponible</span>
                 </div>
                 <div class="h6 mt-4">
-                  <i class="ni business_briefcase-24 mr-2"></i>Solution Manager - Creative Tim Officer
+                  <i class="ni business_briefcase-24 mr-2"></i><span id="specialities_doctor">No disponible</span>
                 </div>
                 <div>
-                  <i class="ni education_hat mr-2"></i>University of Computer Science
+                  <i class="ni education_hat mr-2"></i><span id="university_doctor">No disponible</span>
                 </div>
               </div>
             </div>
@@ -196,7 +194,36 @@
     </div>
 {% endblock %}
 {% block extra_script %}
+    <style>
+    .skeleton {
+        background-color: #e2e2e2;
+        border-radius: 4px;
+        min-height: 1.2em;
+        width: 100%;
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% {
+            background-color: #e2e2e2;
+        }
+        50% {
+            background-color: #f3f3f3;
+        }
+        100% {
+            background-color: #e2e2e2;
+        }
+    }
+    .btn-off {
+        background-color: #bfbfbf;
+        color: #dbdbdb;
+        border: 1px solid #ccc; /* Borde gris */
+        cursor: not-allowed;  /* Cambiar el cursor a no permitido */
+    }
+    </style>
     <script>
+    var default_data_dict = {'photo_doctor': '{% static 'admin/assets/img/no-profile.png' %}', 'name_doctor': 'No seleccionado', 'age': 0, 
+        'front_page_card': '{% static 'admin/assets/img/portada_no_disponible.jpg' %}'}
      $('select').select2({
         width: '100%'  // Ajusta el ancho para que ocupe el 100% del contenedor
     });
@@ -204,46 +231,58 @@
             placeholder: "Seleccione una espcialidad",
             allowClear: true
         }).on('select2:select', function(e) {
-        var specialityId = e.params.data.id;
-        $.ajax({
-                url: '{{ request.path }}',  // La URL de tu vista en Django
-                method: 'GET',
-                data: {
-                    action: 'searchdoctorbyspeciality',  // La acción que estás solicitando
-                    id_speciality: specialityId  // El ID de la especialidad seleccionada
-                },
-                success: function(response) {
-                    // Si la respuesta es exitosa, actualizar Select2 con los resultados
-                    var doctorOptions = response.results;  // Resultados devueltos por Django
-
-                    // Vaciar el select de doctores y agregar las nuevas opciones
-                    $('#id_doctor').empty().trigger('change');
-                    
-                    // Añadir opciones al Select2
-                    doctorOptions.forEach(function(doctor) {
-                        let option = new Option(doctor.text, doctor.id, false, false);
-                        $('#id_doctor').append(option);
-                    });
-
-                    // Actualizar el Select2 para que se muestren las nuevas opciones
-                    $('#id_doctor').trigger('change');
-                },
-                error: function(xhr, status, error) {
-                    // Manejar cualquier error de la solicitud AJAX
-                    console.error("Error al cargar los doctores:", error);
-                }
-            });
-        
+        let specialityId = e.params.data.id;
+        let data_dict = { action: 'searchdoctorbyspeciality', id_speciality: specialityId }
+        set_select(data_dict, 'id_doctor')
     });
-        $("#id_doctor").select2({
-            language: {
-                noResults: function () {
-                    return "No se encontraron doctores";  // Mensaje cuando no hay resultados
-                }
+    $("#id_doctor").select2({
+        language: {
+            noResults: function () {
+                return "No se encontraron doctores";  // Mensaje cuando no hay resultados
+            }
+        },
+        placeholder: 'Selecione un doctor',
+        allowClear: true
+
+    }).on('select2:select', function (e) {
+        let doctorId = e.params.data.id;
+        $.ajax({
+            url: '{{ request.path }}',  // La URL de tu vista en Django
+            method: 'GET',
+            data: {action: 'getdoctorinfo', id_doctor: doctorId},
+            success: function (response) {
+                update_doctor_target(response.data, true)
+
             },
-            placeholder: 'Selecione un doctor',
-            minimumInputLength: 1,
-            
+            error: function (xhr, status, error) {
+                update_doctor_target(default_data_dict, false)
+                console.error("Error al cargar los doctores:", error);
+            }
         });
+        {#var doctorId = e.params.data.id;#}
+        {#let data_dict = { action: 'searchdoctorappointmentdates', doctorId: doctorId }#}
+        {#set_select(data_dict, 'id_doctor')#}
+    }).on('select2:clearing', function (e) {
+        update_doctor_target(default_data_dict, false)
+    });
+        
+        function update_doctor_target(info, display){
+            $('#photo_doctor').attr('src', info.photo_doctor)
+            $('#name_doctor').text(info.name_doctor)
+            if (display){
+                $('#age_doctor').text(', '+ info.age)
+                $('#age_doctor').show();
+                $('#btn_more_info').attr('disabled', false)
+                $('#btn_more_info').removeClass('btn-off').addClass('btn-info')
+            } else {  
+                $('#age_doctor').hide(); 
+                 $('#btn_more_info').attr('disabled', true)
+                $('#btn_more_info').addClass('btn-off').removeClass('btn-info')
+            }
+            $('#front_page_card').attr('src', info.front_page_card)
+           
+
+        }
     </script>
 {% endblock %}
+

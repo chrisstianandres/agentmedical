@@ -182,6 +182,8 @@ class Person(ModeloBase):
     emailinst = models.CharField(default='', max_length=200,  blank=True, null=True, verbose_name=u"Correo electronico institucional")
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     photo = models.FileField(upload_to='photos/', blank=True, null=True)
+    front_page_card = models.FileField(upload_to='front_page/', blank=True, null=True)
+    front_page_profile = models.FileField(upload_to='front_page/', blank=True, null=True)
 
     def __str__(self):
         return f'{self.names} {self.lastnames}'
@@ -192,4 +194,10 @@ class Person(ModeloBase):
 
     def full_name(self):
         return f'{self.names} {self.lastnames}'
+
+    def get_photo(self):
+        return f'{self.photo.url}' if self.photo else '/static/admin/assets/img/no-profile.png'
+
+    def get_front_page_card(self):
+        return f'{self.front_page_card.url}' if self.front_page_card else '/static/admin/assets/img/portada_no_disponible.jpg'
 
