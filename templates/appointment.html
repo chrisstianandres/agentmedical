@@ -176,15 +176,16 @@
 {#                </div>#}
 {#              </div>#}
               <div class="text-center mt-4">
-                <h5 id="name_doctor">No seleccionado<span class="font-weight-light" id="age_doctor" style="display: none">, 0</span></h5>
+                <h5 id="name_doctor" style="display: none">No seleccionado</h5>
                 <div class="h6 font-weight-300">
-                  <i class="ni location_pin mr-2"></i><span id="country_doctor">No disponible</span>
+                  <i class="ni location_pin mr-2"></i><span id="country_doctor" style="display: none">No disponible</span>
                 </div>
+{#                  <h5 id="title_specialities">Especialidades</h5>#}
                 <div class="h6 mt-4">
-                  <i class="ni business_briefcase-24 mr-2"></i><span id="specialities_doctor">No disponible</span>
+                  <i class="ni business_briefcase-24 mr-2"></i><span id="specialities_doctor" style="display: none">No disponible</span>
                 </div>
                 <div>
-                  <i class="ni education_hat mr-2"></i><span id="university_doctor">No disponible</span>
+                  <i class="ni education_hat mr-2"></i><span id="university_doctor" style="display: none">No disponible</span>
                 </div>
               </div>
             </div>
@@ -222,65 +223,118 @@
     }
     </style>
     <script>
-    var default_data_dict = {'photo_doctor': '{% static 'admin/assets/img/no-profile.png' %}', 'name_doctor': 'No seleccionado', 'age': 0, 
-        'front_page_card': '{% static 'admin/assets/img/portada_no_disponible.jpg' %}'}
-     $('select').select2({
-        width: '100%'  // Ajusta el ancho para que ocupe el 100% del contenedor
-    });
+        var default_data_dict = {
+            'photo_doctor': '{% static 'admin/assets/img/no-profile.png' %}',
+            'name_doctor': 'No seleccionado',
+            'country_doctor': 'No seleccionado',
+            'age': 0,
+            'front_page_card': '{% static 'admin/assets/img/portada_no_disponible.jpg' %}'
+        }
+        $('select').select2({
+            width: '100%'  // Ajusta el ancho para que ocupe el 100% del contenedor
+        });
         $('#id_speciality').select2({
             placeholder: "Seleccione una espcialidad",
-            allowClear: true
-        }).on('select2:select', function(e) {
-        let specialityId = e.params.data.id;
-        let data_dict = { action: 'searchdoctorbyspeciality', id_speciality: specialityId }
-        set_select(data_dict, 'id_doctor')
-    });
-    $("#id_doctor").select2({
-        language: {
-            noResults: function () {
-                return "No se encontraron doctores";  // Mensaje cuando no hay resultados
-            }
-        },
-        placeholder: 'Selecione un doctor',
-        allowClear: true
+            allowClear: true,
+             templateResult: function (data) {
+                 // Solo mostrar la imagen si `data.image_url` existe
+                 if (data.element) {
+                     let $element = $(data.element);
+                     let imgSrc = $element.data('image');  // Obtener la imagen desde el atributo `data-image`
 
-    }).on('select2:select', function (e) {
-        let doctorId = e.params.data.id;
-        $.ajax({
-            url: '{{ request.path }}',  // La URL de tu vista en Django
-            method: 'GET',
-            data: {action: 'getdoctorinfo', id_doctor: doctorId},
-            success: function (response) {
-                update_doctor_target(response.data, true)
+                     // Si hay imagen, mostrarla
+                     if (imgSrc) {
+                         return $('<span><img src="' + imgSrc + '" alt="photo" style="width: 20px; height: 20px; margin-right: 10px;">' + data.text + '</span>');
+                     }
+                     // Si no hay imagen, solo mostrar el texto
+                     return $('<span>' + data.text + '</span>');
+                 }
+                 return data.text;
+             },
+            // Usamos templateSelection para mostrar la imagen cuando la opción está seleccionada
+            templateSelection: function (data) {
+                if (data.element) {
+                    let $element = $(data.element);
+                    let imgSrc = $element.data('image');
 
-            },
-            error: function (xhr, status, error) {
-                update_doctor_target(default_data_dict, false)
-                console.error("Error al cargar los doctores:", error);
+                    // Si hay imagen, mostrarla
+                    if (imgSrc) {
+                        return $('<span><img src="' + imgSrc + '"  alt="photo" style="width: 20px; height: 20px; margin-right: 10px;">' + data.text + '</span>');
+                    }
+                    // Si no hay imagen, solo mostrar el texto
+                    return $('<span>' + data.text + '</span>');
+                }
+                return data.text;
             }
+        }).on('select2:select', function (e) {
+            let specialityId = e.params.data.id;
+            let data_dict = {action: 'searchdoctorbyspeciality', id_speciality: specialityId}
+            set_select(data_dict, 'id_doctor')
         });
-        {#var doctorId = e.params.data.id;#}
-        {#let data_dict = { action: 'searchdoctorappointmentdates', doctorId: doctorId }#}
-        {#set_select(data_dict, 'id_doctor')#}
-    }).on('select2:clearing', function (e) {
-        update_doctor_target(default_data_dict, false)
-    });
-        
-        function update_doctor_target(info, display){
-            $('#photo_doctor').attr('src', info.photo_doctor)
-            $('#name_doctor').text(info.name_doctor)
-            if (display){
-                $('#age_doctor').text(', '+ info.age)
-                $('#age_doctor').show();
+        $("#id_doctor").select2({
+            language: {
+                noResults: function () {
+                    return "No se encontraron doctores";  // Mensaje cuando no hay resultados
+                }
+            },
+            placeholder: 'Selecione un doctor',
+            allowClear: true
+
+        }).on('select2:select', function (e) {
+            let doctorId = e.params.data.id;
+            $.ajax({
+                url: '{{ request.path }}',  // La URL de tu vista en Django
+                method: 'GET',
+                data: {action: 'getdoctorinfo', id_doctor: doctorId},
+                success: function (response) {
+                    update_doctor_target(response.data, true)
+
+                },
+                error: function (xhr, status, error) {
+                    update_doctor_target(default_data_dict, false)
+                    console.error("Error al cargar los doctores:", error);
+                }
+            });
+            {#var doctorId = e.params.data.id;#}
+            {#let data_dict = { action: 'searchdoctorappointmentdates', doctorId: doctorId }#}
+            {#set_select(data_dict, 'id_doctor')#}
+        }).on('select2:clearing', function (e) {
+            update_doctor_target(default_data_dict, false)
+        });
+
+        function update_doctor_target(info, display) {
+            {#$('#photo_doctor').attr('src', info.photo_doctor)#}
+            var newImg = $('<img>', {src: info.photo_doctor, style: 'display:none'});
+
+            // Al cambiar la imagen, la anterior se desvanecerá y la nueva aparecerá
+            $('#photo_doctor').fadeOut(400, function () {
+                $(this).attr('src', info.photo_doctor);  // Cambiar el src de la imagen
+                $(this).fadeIn(400);  // Aparece de nuevo con fadeIn
+            });
+
+            {#$('#name_doctor').html(info.name_doctor)#}
+            if (display) {
+                debugger;
+                {#$('#age_doctor').text(', ' + info.age)#}
+                $('#name_doctor').html(info.name_doctor + ' <span class="font-weight-light" id="age_doctor">, ' + info.age + '</span>').slideDown(500);
+                $('#country_doctor').html(info.country_doctor).slideDown(500);
+                $('#specialities_doctor').html(info.specialities_doctor).slideDown(500);
+                $('#title_specialities').slideDown(500);
+
+                {#$('#age_doctor').slideDown(500);#}
+                {#$('#age_doctor').show();#}
                 $('#btn_more_info').attr('disabled', false)
                 $('#btn_more_info').removeClass('btn-off').addClass('btn-info')
-            } else {  
-                $('#age_doctor').hide(); 
-                 $('#btn_more_info').attr('disabled', true)
+            } else {
+                $('#name_doctor').html(info.name_doctor).slideUp(300);
+                $('#country_doctor').html(info.country_doctor).slideUp(300);
+                $('#specialities_doctor').html(info.specialities_doctor).slideUp(300);
+                $('#title_specialities').slideUp(300);
+                $('#btn_more_info').attr('disabled', true)
                 $('#btn_more_info').addClass('btn-off').removeClass('btn-info')
             }
             $('#front_page_card').attr('src', info.front_page_card)
-           
+
 
         }
     </script>

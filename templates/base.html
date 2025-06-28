@@ -18,7 +18,6 @@
   <!-- Font Awesome Icons -->
 {#  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>#}
     <link rel="stylesheet" href="{% static 'assets/vendor/fontawesome-free/css/all.css' %}">
-    static/
   <!-- CSS Files -->
   <link id="pagestyle" href="{% static 'admin/assets/css/argon-dashboard.css' %}" rel="stylesheet" />
 </head>
@@ -693,6 +692,7 @@
                 method: 'GET',
                 data: data_dict,
                 success: function(response) {
+                    debugger
                     // Si la respuesta es exitosa, actualizar Select2 con los resultados
                     var doctorOptions = response.results;  // Resultados devueltos por Django
 
@@ -702,6 +702,9 @@
                     // Añadir opciones al Select2
                     doctorOptions.forEach(function(item) {
                         let option = new Option(item.text, item.id, false, false);
+                        if (item.image_url) {
+                            $(option).attr('data-image', item.image_url);  // Establecer la imagen como un atributo
+                        }
                         $('#'+id_select_receptor).append(option);
                     });
 

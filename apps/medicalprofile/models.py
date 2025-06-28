@@ -44,3 +44,27 @@ class SpecialtyProfile(ModeloBase):
     class Meta:
         verbose_name = "Speciality Profile Medical"
         verbose_name_plural = "Specialities Profiles Medical"
+
+
+class ConsultationSchedule(models.Model):
+    from apps.core.models import Person
+    doctor = models.ForeignKey(ProfileMedical, on_delete=models.CASCADE, verbose_name="Doctor")
+    start_time = models.TimeField(verbose_name="Hora de inicio")
+    end_time = models.TimeField(verbose_name="Hora de fin")
+    consultation_duration = models.DurationField(verbose_name="Duración de consulta")  # Para saber cuánto dura cada consulta
+    available_days = models.CharField(
+        max_length=50,
+        choices=[('monday', 'Lunes'), ('tuesday', 'Martes'), ('wednesday', 'Miércoles'),
+                 ('thursday', 'Jueves'), ('friday', 'Viernes'), ('saturday', 'Sábado'),
+                 ('sunday', 'Domingo')],
+        verbose_name="Días disponibles",
+        help_text="Días de la semana en los que el doctor está disponible para consultas.",
+        blank=True, null=True
+    )
+
+    def __str__(self):
+        return f"{self.doctor} - {self.start_time} a {self.end_time}"
+
+    class Meta:
+        verbose_name = "Horario de consulta"
+        verbose_name_plural = "Horarios de consulta"

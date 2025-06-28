@@ -9,9 +9,9 @@ class AppointmentForm(forms.Form):
     doctor = forms.ModelChoiceField(queryset=ProfileMedical.objects.none(), required=False, widget=forms.Select(attrs={'class': 'form-control'}))
     date = forms.DateField(
         required=False,
-        widget=forms.SelectDateWidget(attrs={'class': 'form-control'})
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     turn = forms.DateTimeField(
         required=False,
-        widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'})
+        widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'time'})
     )

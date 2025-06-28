@@ -195,9 +195,33 @@ class Person(ModeloBase):
     def full_name(self):
         return f'{self.names} {self.lastnames}'
 
+    def full_residence_country(self):
+        if not self.country or not self.province or not self.canton:
+            return ''
+        return f'{self.country.name}-{self.province.name}, {self.canton.name}'
+
     def get_photo(self):
         return f'{self.photo.url}' if self.photo else '/static/admin/assets/img/no-profile.png'
 
     def get_front_page_card(self):
         return f'{self.front_page_card.url}' if self.front_page_card else '/static/admin/assets/img/portada_no_disponible.jpg'
+
+
+
+
+# Modelo para el perfil
+class UserProfile(ModeloBase):
+    from apps.medicalprofile.models import ProfileMedical
+    from apps.patientprofile.models import ProfilePatient
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    profilemedical = models.ForeignKey(ProfileMedical, blank=True, null=True, verbose_name='Perfil personal de salud', on_delete=models.CASCADE)
+    patient = models.ForeignKey(ProfilePatient, blank=True, null=True, verbose_name='Paciente', on_delete=models.CASCADE)
+    # admin = models.ForeignKey(ProfileAdmin, blank=True, null=True, verbose_name=u'Empleador bolsa laboral', on_delete=models.CASCADE)
+    visible = models.BooleanField(default=True, verbose_name='Visible')
+    def __str__(self):
+        return u'%s' % "OTRO PERFIL"
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
 
