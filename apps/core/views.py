@@ -114,7 +114,7 @@ def view(request):
                         available_dates.append(current_date)
                     current_date += timedelta(days=1)
 
-                return JsonResponse({"data": [], 'message': 'ok'}, safe=False)
+                return JsonResponse({"data": available_dates, 'message': 'ok'}, safe=False)
 
             return JsonResponse({"data": [], 'message': 'error'}, safe=False)
         else:

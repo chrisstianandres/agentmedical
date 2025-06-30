@@ -287,7 +287,32 @@
                 method: 'GET',
                 data: {action: 'getdoctorinfo', id_doctor: doctorId},
                 success: function (response) {
-                    update_doctor_target(response.data, true)
+                    update_doctor_target(response.data, true);
+                    let doctorId = e.params.data.id;
+                    let data_dict = {action: 'getdatesavalies', doctor_id: doctorId}
+                    $.ajax({
+                        url: '{{ request.path }}', // Endpoint que hemos creado en Django
+                        type: 'GET',
+                        data : data_dict,
+                        success: function (response) {
+                            // Obtener las fechas disponibles del doctor
+                            var availableDates = response.data;
+
+                            // Inicializar el datepicker
+                            $('#id_date').datepicker({
+                                dateFormat: 'yy-mm-dd',  // Formato de fecha
+                                beforeShowDay: function (date) {
+                                    var string = $.datepicker.formatDate('yy-mm-dd', date);
+                                    // Si la fecha está en la lista de fechas disponibles, la resalta
+                                    return [availableDates.indexOf(string) !== -1];
+                                }
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Error al obtener las fechas disponibles: ", error);
+                        }
+                    });
+                    
 
                 },
                 error: function (xhr, status, error) {
