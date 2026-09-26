@@ -27,7 +27,7 @@ SITE_STORAGE = BASE_DIR
 SECRET_KEY = 'django-insecure-k4a$wwl&(cz(hdm_oca4(!c9479%*7ja+h&m9j6qodxdqwb&k_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.landingpage',
     'apps.medicalprofile',
+    'apps.appointment',
 ]
 
 MIDDLEWARE = [
@@ -101,13 +102,21 @@ USER_AGENTS_CACHE = 'default'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'medical',  # Or path to database file if using sqlite3.
-            'USER': 'postgres',  # Not used with sqlite3.
-            'PASSWORD': '123456',  # Not used with sqlite3.
-            'HOST': 'localhost',  # Set to empty string for localhost. Not used with sqlite3.
+            'NAME': 'agmendical',  # Or path to database file if using sqlite3.
+            'USER': 'agmendical_user',  # Not used with sqlite3.
+            'PASSWORD': '8Z6l3lrKL3nQRAKxTlaSX3YdmmQ6lLdE',  # Not used with sqlite3.
+            'HOST': 'dpg-darvf797lnhs73f0qn30-a',  # Set to empty string for localhost. Not used with sqlite3.
             'PORT': 5432,  # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+
+# Authentication
+# https://docs.djangoproject.com/en/4.2/ref/settings/#auth
+
+LOGIN_URL = '/login'
+LOGIN_REDIRECT_URL = '/panel'
+LOGOUT_REDIRECT_URL = '/login'
 
 
 # Password validation
