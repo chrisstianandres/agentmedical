@@ -1,4 +1,4 @@
-**/migrations/
+
 .venv/
 .idea/
 /graphify-out/
