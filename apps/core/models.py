@@ -184,6 +184,7 @@ class Person(ModeloBase):
     photo = models.FileField(upload_to='photos/', blank=True, null=True)
     front_page_card = models.FileField(upload_to='front_page/', blank=True, null=True)
     front_page_profile = models.FileField(upload_to='front_page/', blank=True, null=True)
+    must_change_password = models.BooleanField(default=False, verbose_name='Debe cambiar la contraseña')
 
     def __str__(self):
         return f'{self.names} {self.lastnames}'
@@ -194,6 +195,14 @@ class Person(ModeloBase):
 
     def full_name(self):
         return f'{self.names} {self.lastnames}'
+
+    def age(self):
+        """ Años cumplidos desde la fecha de nacimiento o None """
+        if not self.birthdate:
+            return None
+        from datetime import date
+        today = date.today()
+        return today.year - self.birthdate.year - ((today.month, today.day) < (self.birthdate.month, self.birthdate.day))
 
     def full_residence_country(self):
         if not self.country or not self.province or not self.canton:

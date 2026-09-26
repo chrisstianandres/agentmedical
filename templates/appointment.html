@@ -1,367 +1,162 @@
-{% extends 'base.html' %}
+{% extends 'panel_base.html' %}
 {% load static %}
 {% block body %}
-	 <div class="card shadow-lg mx-4 card-profile-bottom">
-      <div class="card-body p-3">
-        <div class="row gx-4">
-          <div class="col-auto">
-            <div class="avatar avatar-xl position-relative">
-              <img src="{{ person.photo.url }}" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
-            </div>
-          </div>
-          <div class="col-auto my-auto">
-            <div class="h-100">
-              <h5 class="mb-1">
-                {{ person.full_name }}
-              </h5>
-              <p class="mb-0 font-weight-bold text-sm">
-                Public Relations
-              </p>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6 my-sm-auto ms-sm-auto me-sm-0 mx-auto mt-3">
-            <div class="nav-wrapper position-relative end-0">
-              <ul class="nav nav-pills nav-fill p-1" role="tablist">
-                <li class="nav-item">
-                  <a class="nav-link mb-0 px-0 py-1 active d-flex align-items-center justify-content-center " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="true">
-                    <i class="ni ni-app"></i>
-                    <span class="ms-2">App</span>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link mb-0 px-0 py-1 d-flex align-items-center justify-content-center " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="false">
-                    <i class="ni ni-email-83"></i>
-                    <span class="ms-2">Messages</span>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link mb-0 px-0 py-1 d-flex align-items-center justify-content-center " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="false">
-                    <i class="ni ni-settings-gear-65"></i>
-                    <span class="ms-2">Settings</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+    <section class="space-y-6 animate-fade-in">
+        <div>
+            <h1 class="page-title flex flex-wrap items-center gap-2">
+                Reservar Cita Médica
+                <span class="badge badge-success font-medium">Atención Presencial</span>
+            </h1>
+            <p class="page-subtitle">Selecciona la especialidad requerida para desplegar los médicos disponibles y sus agendas de atención.</p>
         </div>
-      </div>
-    </div>
-    <div class="container-fluid py-4">
-      <div class="row">
-        <div class="col-md-8">
-          <div class="card">
-            <div class="card-header pb-0">
-              <div class="d-flex align-items-center">
-                <p class="mb-0">Reservar cita médica</p>
-                <button class="btn btn-primary btn-sm ms-auto">Settings</button>
-              </div>
-            </div>
-            <div class="card-body">
-              <p class="text-uppercase text-sm">User Information</p>
-              <div class="row">
-                  {% for field in form %}
-                  	    <div class="col-md-6">
-                            <div class="form-group">
-{#                                <label for="example-text-input" class="form-control-label">Username</label>#}
-                                <label for="id_{{ field.name }}" class="form-control-label">{{ field.label }}</label>
-                                {{ field }}
-                                <p class="help-text">{{ field.help_text }} </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Formulario de reserva -->
+            <div class="lg:col-span-7 card card-body card-body-lg">
+                <div class="form-section-head">
+                    <div class="flex items-center gap-2">
+                        <span class="step-badge">1</span>
+                        <h2 class="font-semibold text-slate-800 text-base">Datos de la Consulta</h2>
+                    </div>
+                    <span class="form-note">* Campos obligatorios</span>
+                </div>
+
+                <form id="appointmentForm" class="space-y-5" novalidate>
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="specialtySelect" class="form-label">1. Especialidad Médica <span class="required">*</span></label>
+                            <div class="select-wrap">
+                                <select id="specialtySelect" name="speciality" class="form-control">
+                                    <option value="">-- Seleccionar Especialidad --</option>
+                                    {% for s in specialities %}
+                                        <option value="{{ s.id }}"{% if s.id|stringformat:"s" == preset_speciality %} selected{% endif %}>{{ s.title }}</option>
+                                    {% endfor %}
+                                </select>
+                                <i class="fa-solid fa-chevron-down select-icon"></i>
                             </div>
                         </div>
-                  {% endfor %}
 
-{#                <div class="col-md-6">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Username</label>#}
-{#                    <input class="form-control" type="text" value="lucky.jesse">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-6">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Email address</label>#}
-{#                    <input class="form-control" type="email" value="jesse@example.com">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-6">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">First name</label>#}
-{#                    <input class="form-control" type="text" value="Jesse">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-6">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Last name</label>#}
-{#                    <input class="form-control" type="text" value="Lucky">#}
-{#                  </div>#}
-{#                </div>#}
-              </div>
-{#              <hr class="horizontal dark">#}
-{#              <p class="text-uppercase text-sm">Contact Information</p>#}
-{#              <div class="row">#}
-{#                <div class="col-md-12">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Address</label>#}
-{#                    <input class="form-control" type="text" value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-4">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">City</label>#}
-{#                    <input class="form-control" type="text" value="New York">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-4">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Country</label>#}
-{#                    <input class="form-control" type="text" value="United States">#}
-{#                  </div>#}
-{#                </div>#}
-{#                <div class="col-md-4">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">Postal code</label>#}
-{#                    <input class="form-control" type="text" value="437300">#}
-{#                  </div>#}
-{#                </div>#}
-{#              </div>#}
-{#              <hr class="horizontal dark">#}
-{#              <p class="text-uppercase text-sm">About me</p>#}
-{#              <div class="row">#}
-{#                <div class="col-md-12">#}
-{#                  <div class="form-group">#}
-{#                    <label for="example-text-input" class="form-control-label">About me</label>#}
-{#                    <input class="form-control" type="text" value="A beautiful Dashboard for Bootstrap 5. It is Free and Open Source.">#}
-{#                  </div>#}
-{#                </div>#}
-{#              </div>#}
+                        <div>
+                            <label for="doctorSelect" class="form-label">2. Médico Especialista <span class="required">*</span></label>
+                            <div class="select-wrap">
+                                <select id="doctorSelect" name="doctor" class="form-control" disabled>
+                                    <option value="">-- Primero elija especialidad --</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down select-icon"></i>
+                            </div>
+                            <p id="doctorHint" class="form-hint">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Selecciona una especialidad para desplegar médicos.</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label for="appointmentDate" class="form-label">3. Fecha de la Cita <span class="required">*</span></label>
+                            <input type="text" id="appointmentDate" name="date" class="form-control" disabled placeholder="Selecciona un médico primero" autocomplete="off">
+                            <p id="dateHint" class="form-hint" hidden>
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span></span>
+                            </p>
+                        </div>
+
+                        <div>
+                            <span class="form-label">4. Turnos Disponibles <span class="required">*</span></span>
+                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar">
+                                <p class="slots-message"><i class="fa-solid fa-circle-info text-[10px]"></i> Selecciona una fecha para ver los turnos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label for="reason" class="form-label">
+                            Motivo de la Consulta / Sintomatología <span class="optional">(Opcional)</span>
+                        </label>
+                        <textarea id="reason" name="reason" rows="2" maxlength="500" class="form-control" placeholder="Describe brevemente el motivo de tu visita o síntomas..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="resetBtn" class="btn btn-outline">Limpiar</button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                            <i class="fa-solid fa-calendar-check text-xs"></i>
+                            <span>Confirmar Reserva de Cita</span>
+                        </button>
+                    </div>
+                </form>
             </div>
-          </div>
+
+            <!-- Tarjeta del médico / estado vacío -->
+            <div class="lg:col-span-5">
+                {% include 'panel/partials/doctor_preview_card.html' %}
+            </div>
         </div>
-        <div class="col-md-4">
-          <div class="card card-profile">
-            <img id="front_page_card" src="{% static 'admin/assets/img/portada_no_disponible.jpg' %}" alt="Image placeholder" class="card-img-top">
-            <div class="row justify-content-center">
-              <div class="col-4 col-lg-4 order-lg-2">
-                <div class="mt-n4 mt-lg-n6 mb-4 mb-lg-0">
-                  <a href="javascript:;">
-                    <img id="photo_doctor" src="{% static 'admin/assets/img/no-profile.png' %}" class="rounded-circle img-fluid border border-2 border-white">
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div class="card-header text-center border-0 pt-0 pt-lg-2 pb-4 pb-lg-3">
-              <div class="d-flex justify-content-between">
-                <a href="javascript:;" id="btn_more_info" class="btn btn-sm btn-off mb-0 d-none d-lg-block" disabled="disabled"><i class="fas fa-info-circle"></i> Más informacón</a>
-                <a href="javascript:;" class="btn btn-sm btn-info mb-0 d-block d-lg-none"><i class="ni ni-collection"></i></a>
-                <a href="javascript:;" id="btn_linkedin" class="btn btn-sm btn-off float-right mb-0 d-none d-lg-block"><i class="fab fa-linkedin"></i> Linkedin</a>
-                <a href="javascript:;" class="btn btn-sm btn-dark float-right mb-0 d-block d-lg-none"><i class="ni ni-email-83"></i></a>
-              </div>
-            </div>
-            <div class="card-body pt-0">
-{#              <div class="row">#}
-{#                <div class="col">#}
-{#                  <div class="d-flex justify-content-center">#}
-{#                    <div class="d-grid text-center">#}
-{#                      <span class="text-lg font-weight-bolder">22</span>#}
-{#                      <span class="text-sm opacity-8">Friends</span>#}
-{#                    </div>#}
-{#                    <div class="d-grid text-center mx-4">#}
-{#                      <span class="text-lg font-weight-bolder">10</span>#}
-{#                      <span class="text-sm opacity-8">Photos</span>#}
-{#                    </div>#}
-{#                    <div class="d-grid text-center">#}
-{#                      <span class="text-lg font-weight-bolder">89</span>#}
-{#                      <span class="text-sm opacity-8">Comments</span>#}
-{#                    </div>#}
-{#                  </div>#}
-{#                </div>#}
-{#              </div>#}
-              <div class="text-center mt-4">
-                <h5 id="name_doctor" style="display: none">No seleccionado</h5>
-                <div class="h6 font-weight-300">
-                  <i class="ni location_pin mr-2"></i><span id="country_doctor" style="display: none">No disponible</span>
-                </div>
-{#                  <h5 id="title_specialities">Especialidades</h5>#}
-                <div class="h6 mt-4">
-                  <i class="ni business_briefcase-24 mr-2"></i><span id="specialities_doctor" style="display: none">No disponible</span>
-                </div>
-                <div>
-                  <i class="ni education_hat mr-2"></i><span id="university_doctor" style="display: none">No disponible</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
+
+    {% include 'panel/partials/booking_success_modal.html' %}
 {% endblock %}
+
 {% block extra_script %}
-    <style>
-    .skeleton {
-        background-color: #e2e2e2;
-        border-radius: 4px;
-        min-height: 1.2em;
-        width: 100%;
-        animation: pulse 1.5s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-        0% {
-            background-color: #e2e2e2;
-        }
-        50% {
-            background-color: #f3f3f3;
-        }
-        100% {
-            background-color: #e2e2e2;
-        }
-    }
-    .btn-off {
-        background-color: #bfbfbf;
-        color: #dbdbdb;
-        border: 1px solid #ccc; /* Borde gris */
-        cursor: not-allowed;  /* Cambiar el cursor a no permitido */
-    }
-    </style>
     <script>
-        var default_data_dict = {
-            'photo_doctor': '{% static 'admin/assets/img/no-profile.png' %}',
-            'name_doctor': 'No seleccionado',
-            'country_doctor': 'No seleccionado',
-            'age': 0,
-            'front_page_card': '{% static 'admin/assets/img/portada_no_disponible.jpg' %}'
-        }
-        $('select').select2({
-            width: '100%'  // Ajusta el ancho para que ocupe el 100% del contenedor
-        });
-        $('#id_speciality').select2({
-            placeholder: "Seleccione una espcialidad",
-            allowClear: true,
-             templateResult: function (data) {
-                 // Solo mostrar la imagen si `data.image_url` existe
-                 if (data.element) {
-                     let $element = $(data.element);
-                     let imgSrc = $element.data('image');  // Obtener la imagen desde el atributo `data-image`
+        (function () {
+            const specSelect = document.getElementById('specialtySelect');
+            const submitBtn = document.getElementById('submitBtn');
+            const reason = document.getElementById('reason');
 
-                     // Si hay imagen, mostrarla
-                     if (imgSrc) {
-                         return $('<span><img src="' + imgSrc + '" alt="photo" style="width: 20px; height: 20px; margin-right: 10px;">' + data.text + '</span>');
-                     }
-                     // Si no hay imagen, solo mostrar el texto
-                     return $('<span>' + data.text + '</span>');
-                 }
-                 return data.text;
-             },
-            // Usamos templateSelection para mostrar la imagen cuando la opción está seleccionada
-            templateSelection: function (data) {
-                if (data.element) {
-                    let $element = $(data.element);
-                    let imgSrc = $element.data('image');
+            const booking = DoctorPicker.create({
+                specSelect: specSelect,
+                docSelect: document.getElementById('doctorSelect'),
+                docHint: document.getElementById('doctorHint'),
+                dateInput: document.getElementById('appointmentDate'),
+                slotsBox: document.getElementById('timeSlotsContainer'),
+                dateHint: document.getElementById('dateHint'),
+                noPhoto: '{% static 'admin/assets/img/no-profile.png' %}',
+                onChange: function () { submitBtn.disabled = !booking.ready(); }
+            });
 
-                    // Si hay imagen, mostrarla
-                    if (imgSrc) {
-                        return $('<span><img src="' + imgSrc + '"  alt="photo" style="width: 20px; height: 20px; margin-right: 10px;">' + data.text + '</span>');
-                    }
-                    // Si no hay imagen, solo mostrar el texto
-                    return $('<span>' + data.text + '</span>');
-                }
-                return data.text;
+            function renderSummary(data) {
+                const rows = [
+                    ['Médico:', data.doctor, 'info-value-strong'],
+                    ['Especialidad:', data.specialty, 'text-accent'],
+                    ['Fecha y Turno:', [data.date, data.time].filter(Boolean).join(' · '), 'info-value-strong'],
+                    ['Consultorio:', data.office || 'Por asignar', '']
+                ];
+                document.getElementById('modalSummary').innerHTML = rows.map(function (r) {
+                    return '<div class="info-row"><span class="info-label">' + r[0] + '</span>' +
+                        '<span class="info-value ' + r[2] + '">' + escapeHtml(r[1] || '--') + '</span></div>';
+                }).join('');
             }
-        }).on('select2:select', function (e) {
-            let specialityId = e.params.data.id;
-            let data_dict = {action: 'searchdoctorbyspeciality', id_speciality: specialityId}
-            set_select(data_dict, 'id_doctor')
-        });
-        $("#id_doctor").select2({
-            language: {
-                noResults: function () {
-                    return "No se encontraron doctores";  // Mensaje cuando no hay resultados
-                }
-            },
-            placeholder: 'Selecione un doctor',
-            allowClear: true
 
-        }).on('select2:select', function (e) {
-            let doctorId = e.params.data.id;
-            $.ajax({
-                url: '{{ request.path }}',  // La URL de tu vista en Django
-                method: 'GET',
-                data: {action: 'getdoctorinfo', id_doctor: doctorId},
-                success: function (response) {
-                    update_doctor_target(response.data, true);
-                    let doctorId = e.params.data.id;
-                    let data_dict = {action: 'getdatesavalies', doctor_id: doctorId}
-                    $.ajax({
-                        url: '{{ request.path }}', // Endpoint que hemos creado en Django
-                        type: 'GET',
-                        data : data_dict,
-                        success: function (response) {
-                            // Obtener las fechas disponibles del doctor
-                            var availableDates = response.data;
+            document.getElementById('resetBtn').addEventListener('click', function () {
+                reason.value = '';
+                booking.reset();
+            });
 
-                            // Inicializar el datepicker
-                            $('#id_date').datepicker({
-                                dateFormat: 'yy-mm-dd',  // Formato de fecha
-                                beforeShowDay: function (date) {
-                                    var string = $.datepicker.formatDate('yy-mm-dd', date);
-                                    // Si la fecha está en la lista de fechas disponibles, la resalta
-                                    return [availableDates.indexOf(string) !== -1];
-                                }
-                            });
-                        },
-                        error: function (xhr, status, error) {
-                            console.log("Error al obtener las fechas disponibles: ", error);
+            document.getElementById('appointmentForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!booking.ready()) return;
+                setButtonLoading(submitBtn, true, 'Reservando...');
+                postAction(Object.assign({action: 'addappointment', reason: reason.value}, booking.values()))
+                    .done(function (response) {
+                        if (response && response.result === 'ok') {
+                            renderSummary(response.data || {});
+                            openModal('successModal');
+                        } else {
+                            showToast((response && response.mensaje) || 'No se pudo reservar la cita.', 'error');
+                            booking.reloadSlots();   // el turno pudo haberse ocupado
                         }
+                    })
+                    .fail(function () { showToast('Error de conexión al reservar la cita.', 'error'); })
+                    .always(function () {
+                        setButtonLoading(submitBtn, false);
+                        submitBtn.disabled = !booking.ready();
                     });
-                    
-
-                },
-                error: function (xhr, status, error) {
-                    update_doctor_target(default_data_dict, false)
-                    console.error("Error al cargar los doctores:", error);
-                }
-            });
-            {#var doctorId = e.params.data.id;#}
-            {#let data_dict = { action: 'searchdoctorappointmentdates', doctorId: doctorId }#}
-            {#set_select(data_dict, 'id_doctor')#}
-        }).on('select2:clearing', function (e) {
-            update_doctor_target(default_data_dict, false)
-        });
-
-        function update_doctor_target(info, display) {
-            {#$('#photo_doctor').attr('src', info.photo_doctor)#}
-            var newImg = $('<img>', {src: info.photo_doctor, style: 'display:none'});
-
-            // Al cambiar la imagen, la anterior se desvanecerá y la nueva aparecerá
-            $('#photo_doctor').fadeOut(400, function () {
-                $(this).attr('src', info.photo_doctor);  // Cambiar el src de la imagen
-                $(this).fadeIn(400);  // Aparece de nuevo con fadeIn
             });
 
-            {#$('#name_doctor').html(info.name_doctor)#}
-            if (display) {
-                debugger;
-                {#$('#age_doctor').text(', ' + info.age)#}
-                $('#name_doctor').html(info.name_doctor + ' <span class="font-weight-light" id="age_doctor">, ' + info.age + '</span>').slideDown(500);
-                $('#country_doctor').html(info.country_doctor).slideDown(500);
-                $('#specialities_doctor').html(info.specialities_doctor).slideDown(500);
-                $('#title_specialities').slideDown(500);
-
-                {#$('#age_doctor').slideDown(500);#}
-                {#$('#age_doctor').show();#}
-                $('#btn_more_info').attr('disabled', false)
-                $('#btn_more_info').removeClass('btn-off').addClass('btn-info')
-            } else {
-                $('#name_doctor').html(info.name_doctor).slideUp(300);
-                $('#country_doctor').html(info.country_doctor).slideUp(300);
-                $('#specialities_doctor').html(info.specialities_doctor).slideUp(300);
-                $('#title_specialities').slideUp(300);
-                $('#btn_more_info').attr('disabled', true)
-                $('#btn_more_info').addClass('btn-off').removeClass('btn-info')
-            }
-            $('#front_page_card').attr('src', info.front_page_card)
-
-
-        }
+            // Preselección en cadena (p. ej. desde el Directorio Médico)
+            booking.preset(specSelect.value, '{{ preset_doctor|default_if_none:''|escapejs }}');
+        })();
     </script>
 {% endblock %}
-

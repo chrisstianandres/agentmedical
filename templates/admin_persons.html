@@ -1,0 +1,98 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Personas</h1>
+                <p class="page-subtitle">Gestiona pacientes, médicos y personal administrativo, y sus accesos al sistema.</p>
+            </div>
+            <a href="/panel?action=adminpersonform" class="btn btn-primary btn-sm self-start">
+                <i class="fa-solid fa-user-plus"></i> Nueva persona
+            </a>
+        </div>
+
+        <form method="get" action="/panel" class="card filter-bar" role="search">
+            <input type="hidden" name="action" value="adminpersons">
+            <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Nombre, apellido, cédula o correo..." aria-label="Buscar persona" class="form-control form-control-sm">
+            <div class="select-wrap">
+                <select name="role" aria-label="Filtrar por rol" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">Todos los roles</option>
+                    <option value="patient"{% if role == 'patient' %} selected{% endif %}>Pacientes</option>
+                    <option value="doctor"{% if role == 'doctor' %} selected{% endif %}>Médicos</option>
+                    <option value="admin"{% if role == 'admin' %} selected{% endif %}>Administrativos</option>
+                    <option value="none"{% if role == 'none' %} selected{% endif %}>Sin rol</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            {% if q or role %}
+                <a href="/panel?action=adminpersons" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Limpiar</a>
+            {% endif %}
+        </form>
+
+        {% if persons %}
+            <div class="card overflow-hidden">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Persona</th>
+                            <th>Correo</th>
+                            <th>Roles y acceso</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in persons %}
+                            <tr data-highlight-id="{{ p.id }}">
+                                <td>
+                                    <div class="person-cell">
+                                        <img src="{{ p.get_photo }}" alt="{{ p.full_name }}" class="avatar avatar-40">
+                                        <div class="min-w-0">
+                                            <div class="person-cell-name">{{ p.full_name }}</div>
+                                            <div class="person-cell-sub">{% if p.document %}C.I. {{ p.document }}{% else %}Sin documento{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="Correo">{{ p.email|default:"--" }}</td>
+                                <td data-label="Roles y acceso">
+                                    <div class="flex flex-wrap gap-1">
+                                        {% if p.is_patient %}<span class="role-tag role-tag-patient"><i class="fa-solid fa-user"></i> Paciente</span>{% endif %}
+                                        {% if p.is_doctor %}<span class="role-tag role-tag-doctor"><i class="fa-solid fa-user-doctor"></i> Médico</span>{% endif %}
+                                        {% if p.is_admin %}<span class="role-tag role-tag-admin"><i class="fa-solid fa-user-shield"></i> Admin</span>{% endif %}
+                                        {% if p.has_user and p.username %}<span class="role-tag role-tag-noaccess font-mono">@{{ p.username }}</span>{% endif %}
+                                        {% if p.has_user and p.must_change_password %}<span class="role-tag role-tag-temp"><i class="fa-solid fa-key"></i> Contraseña temporal</span>{% endif %}
+                                        {% if not p.has_user %}
+                                            <span class="role-tag role-tag-noaccess"><i class="fa-solid fa-lock"></i> Sin acceso</span>
+                                        {% elif not p.is_active %}
+                                            <span class="role-tag role-tag-inactive"><i class="fa-solid fa-ban"></i> Inactivo</span>
+                                        {% endif %}
+                                        {% if not p.is_patient and not p.is_doctor and not p.is_admin %}<span class="role-tag role-tag-noaccess">Sin rol</span>{% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="/panel?action=adminpersonform&id={{ p.id }}" class="btn btn-outline btn-xs"><i class="fa-solid fa-pen"></i> Editar</a>
+                                        {% if p.patient_id %}
+                                            <a href="/panel?action=adminnewappointment&patient={{ p.patient_id }}" class="btn btn-soft btn-xs"><i class="fa-solid fa-calendar-plus"></i> Agendar cita</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% include 'panel/partials/pagination.html' with page_obj=page_obj %}
+        {% elif q or role %}
+            {% include 'panel/partials/empty_state.html' with icon='fa-magnifying-glass' title='Sin resultados' text='No hay personas que coincidan con la búsqueda.' cta_url='/panel?action=adminpersons' cta_label='Ver todas' cta_icon='fa-rotate-left' %}
+        {% else %}
+            {% include 'panel/partials/empty_state.html' with icon='fa-users' title='Aún no hay personas registradas' text='Registra pacientes, médicos o personal administrativo.' cta_url='/panel?action=adminpersonform' cta_label='Nueva persona' cta_icon='fa-user-plus' %}
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        highlightListItem('{{ highlight|default_if_none:''|escapejs }}');
+    </script>
+{% endblock %}

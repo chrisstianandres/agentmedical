@@ -1,0 +1,9 @@
+{% comment %}Contacto de emergencia en solo lectura. Parámetro: patient (ProfilePatient o None). El teléfono es enlace tel:.{% endcomment %}
+{% if patient.emergency_contact_name %}
+    <p class="text-sm text-slate-800">
+        <span class="font-semibold">{{ patient.emergency_contact_name }}</span>{% if patient.emergency_contact_relationship %} <span class="text-slate-500">({{ patient.emergency_contact_relationship }})</span>{% endif %}
+        {% if patient.emergency_contact_phone %} · <a href="tel:{{ patient.emergency_contact_phone|cut:' ' }}" class="link-action text-sm"><i class="fa-solid fa-phone"></i> {{ patient.emergency_contact_phone }}</a>{% endif %}
+    </p>
+{% else %}
+    <p class="text-xs text-slate-500">No registrado.</p>
+{% endif %}

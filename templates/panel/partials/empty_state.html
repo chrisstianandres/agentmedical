@@ -1,0 +1,14 @@
+{% comment %}
+Estado vacío reutilizable.
+Parámetros: icon (clase FontAwesome), title, text, cta_url, cta_label y cta_icon (opcionales), tall (opcional), id (opcional).
+{% endcomment %}
+<div{% if id %} id="{{ id }}"{% endif %} class="empty-state{% if tall %} empty-state-tall{% endif %}">
+    <div class="empty-state-icon"><i class="fa-solid {{ icon|default:'fa-circle-info' }}"></i></div>
+    <h3 class="empty-state-title">{{ title }}</h3>
+    {% if text %}<p class="empty-state-text">{{ text }}</p>{% endif %}
+    {% if cta_url %}
+        <a href="{{ cta_url }}" class="btn btn-primary btn-sm mt-5">
+            <i class="fa-solid {{ cta_icon|default:'fa-plus' }}"></i> {{ cta_label }}
+        </a>
+    {% endif %}
+</div>

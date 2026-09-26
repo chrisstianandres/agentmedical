@@ -1,0 +1,52 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Gestión de Citas Médicas</h1>
+                <p class="page-subtitle">Revisa el estado de tus citas programadas, tu historial y las citas canceladas.</p>
+            </div>
+            <a href="/panel?action=appointment" class="btn btn-primary btn-sm self-start">
+                <i class="fa-solid fa-plus"></i> Agendar Nueva Cita
+            </a>
+        </div>
+
+        <nav class="tabs" aria-label="Filtro de citas">
+            <a href="/panel?action=myappointments&tab=upcoming" class="tab{% if tab == 'upcoming' %} is-active{% endif %}">Próximas Citas ({{ counts.upcoming|default:0 }})</a>
+            <a href="/panel?action=myappointments&tab=history" class="tab{% if tab == 'history' %} is-active{% endif %}">Historial de Consultas ({{ counts.history|default:0 }})</a>
+            <a href="/panel?action=myappointments&tab=cancelled" class="tab{% if tab == 'cancelled' %} is-active{% endif %}">Canceladas ({{ counts.cancelled|default:0 }})</a>
+        </nav>
+
+        <div class="space-y-4">
+            {% for a in appointments %}
+                {% if tab == 'upcoming' and a.status == 'pendiente' or tab == 'upcoming' and a.status == 'confirmada' %}
+                    {% include 'panel/partials/appointment_card.html' with a=a actions=True %}
+                {% else %}
+                    {% include 'panel/partials/appointment_card.html' with a=a actions=False %}
+                {% endif %}
+            {% empty %}
+                {% if tab == 'history' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-clock-rotate-left' title='Sin historial de consultas' text='Aquí aparecerán las citas que ya fueron atendidas.' %}
+                {% elif tab == 'cancelled' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-xmark' title='Sin citas canceladas' text='No tienes citas canceladas.' %}
+                {% else %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-plus' title='No tienes citas próximas' text='Agenda una cita con el especialista que necesites.' cta_url='/panel?action=appointment' cta_label='Agendar Nueva Cita' %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if tab == 'upcoming' %}
+        {% include 'panel/partials/reschedule_modal.html' %}
+        {% include 'panel/partials/cancel_modal.html' %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_script %}
+    {% if tab == 'upcoming' %}
+    <script>
+        bindCancelButtons();
+        bindRescheduleButtons();
+    </script>
+    {% endif %}
+{% endblock %}

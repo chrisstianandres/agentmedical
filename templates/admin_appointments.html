@@ -1,0 +1,78 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Gestión de citas</h1>
+                <p class="page-subtitle">Confirma, reagenda o cancela citas de todos los médicos y pacientes.</p>
+            </div>
+            <a href="/panel?action=adminnewappointment" class="btn btn-primary btn-sm self-start">
+                <i class="fa-solid fa-calendar-plus"></i> Agendar cita
+            </a>
+        </div>
+
+        <nav class="tabs" aria-label="Filtro de citas">
+            <a href="?action=adminappointments&tab=today{% if q %}&q={{ q|urlencode }}{% endif %}{% if doctor %}&doctor={{ doctor }}{% endif %}{% if speciality %}&speciality={{ speciality }}{% endif %}{% if date %}&date={{ date }}{% endif %}" class="tab{% if tab == 'today' %} is-active{% endif %}">Hoy ({{ counts.today|default:0 }})</a>
+            <a href="?action=adminappointments&tab=upcoming{% if q %}&q={{ q|urlencode }}{% endif %}{% if doctor %}&doctor={{ doctor }}{% endif %}{% if speciality %}&speciality={{ speciality }}{% endif %}{% if date %}&date={{ date }}{% endif %}" class="tab{% if tab == 'upcoming' %} is-active{% endif %}">Próximas ({{ counts.upcoming|default:0 }})</a>
+            <a href="?action=adminappointments&tab=history{% if q %}&q={{ q|urlencode }}{% endif %}{% if doctor %}&doctor={{ doctor }}{% endif %}{% if speciality %}&speciality={{ speciality }}{% endif %}{% if date %}&date={{ date }}{% endif %}" class="tab{% if tab == 'history' %} is-active{% endif %}">Historial ({{ counts.history|default:0 }})</a>
+            <a href="?action=adminappointments&tab=cancelled{% if q %}&q={{ q|urlencode }}{% endif %}{% if doctor %}&doctor={{ doctor }}{% endif %}{% if speciality %}&speciality={{ speciality }}{% endif %}{% if date %}&date={{ date }}{% endif %}" class="tab{% if tab == 'cancelled' %} is-active{% endif %}">Canceladas ({{ counts.cancelled|default:0 }})</a>
+        </nav>
+
+        <form method="get" action="/panel" class="card filter-bar-wide" role="search">
+            <input type="hidden" name="action" value="adminappointments">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Paciente, cédula o HC..." aria-label="Buscar paciente" class="form-control form-control-sm">
+            <div class="select-wrap">
+                <select name="doctor" aria-label="Médico" class="form-control form-control-sm">
+                    <option value="">Todos los médicos</option>
+                    {% for d in doctors %}<option value="{{ d.id }}"{% if d.id|stringformat:"s" == doctor %} selected{% endif %}>{{ d.person.full_name }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <div class="select-wrap">
+                <select name="speciality" aria-label="Especialidad" class="form-control form-control-sm">
+                    <option value="">Todas las especialidades</option>
+                    {% for s in specialities %}<option value="{{ s.id }}"{% if s.id|stringformat:"s" == speciality %} selected{% endif %}>{{ s.title }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <input type="text" id="dateFilter" name="date" value="{{ date|default:'' }}" placeholder="Fecha" aria-label="Filtrar por fecha" class="form-control form-control-sm" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i> Filtrar</button>
+            {% if q or doctor or speciality or date %}
+                <a href="/panel?action=adminappointments&tab={{ tab }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Limpiar</a>
+            {% endif %}
+        </form>
+
+        <div class="space-y-4">
+            {% for a in appointments %}
+                {% include 'panel/partials/appointment_card.html' with a=a mode='admin' %}
+            {% empty %}
+                {% if q or doctor or speciality or date %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-magnifying-glass' title='Sin resultados' text='No hay citas que coincidan con los filtros aplicados.' %}
+                {% elif tab == 'today' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-mug-hot' title='No hay citas para hoy' text='Las citas agendadas para hoy aparecerán aquí.' cta_url='/panel?action=adminnewappointment' cta_label='Agendar cita' cta_icon='fa-calendar-plus' %}
+                {% elif tab == 'upcoming' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-plus' title='No hay citas próximas' text='Agenda una cita para un paciente.' cta_url='/panel?action=adminnewappointment' cta_label='Agendar cita' cta_icon='fa-calendar-plus' %}
+                {% elif tab == 'history' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-clock-rotate-left' title='Sin historial' text='Aquí aparecerán las citas ya atendidas.' %}
+                {% else %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-xmark' title='Sin citas canceladas' text='No hay citas canceladas.' %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% include 'panel/partials/pagination.html' with page_obj=page_obj %}
+    </section>
+
+    {% include 'panel/partials/reschedule_modal.html' %}
+    {% include 'panel/partials/cancel_modal.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        initDateFilter(document.getElementById('dateFilter'));
+        bindConfirmButtons();
+        bindRescheduleButtons();
+        bindCancelButtons();
+    </script>
+{% endblock %}

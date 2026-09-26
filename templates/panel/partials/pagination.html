@@ -1,0 +1,28 @@
+{% comment %}
+Paginación que conserva los filtros del querystring (todos salvo "page").
+Parámetro: page_obj (django Page). No se muestra si hay una sola página.
+{% endcomment %}
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <nav class="pagination" aria-label="Paginación">
+        <span>Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }}</span>
+        <div class="pagination-links">
+            <a class="page-link{% if not page_obj.has_previous %} is-disabled{% endif %}" aria-label="Primera página"
+               href="?page=1{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}&{{ key }}={{ v|urlencode }}{% endfor %}{% endif %}{% endfor %}">
+                <i class="fa-solid fa-angles-left"></i>
+            </a>
+            <a class="page-link{% if not page_obj.has_previous %} is-disabled{% endif %}" aria-label="Página anterior"
+               href="?page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}1{% endif %}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}&{{ key }}={{ v|urlencode }}{% endfor %}{% endif %}{% endfor %}">
+                <i class="fa-solid fa-angle-left"></i>
+            </a>
+            <span class="page-link is-current" aria-current="page">{{ page_obj.number }}</span>
+            <a class="page-link{% if not page_obj.has_next %} is-disabled{% endif %}" aria-label="Página siguiente"
+               href="?page={% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.paginator.num_pages }}{% endif %}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}&{{ key }}={{ v|urlencode }}{% endfor %}{% endif %}{% endfor %}">
+                <i class="fa-solid fa-angle-right"></i>
+            </a>
+            <a class="page-link{% if not page_obj.has_next %} is-disabled{% endif %}" aria-label="Última página"
+               href="?page={{ page_obj.paginator.num_pages }}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}&{{ key }}={{ v|urlencode }}{% endfor %}{% endif %}{% endfor %}">
+                <i class="fa-solid fa-angles-right"></i>
+            </a>
+        </div>
+    </nav>
+{% endif %}

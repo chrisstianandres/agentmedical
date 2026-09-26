@@ -1,0 +1,20 @@
+{% comment %}
+Bloque plegable "Resultado de la consulta".
+Parámetros: diagnosis, indications (opcional), meds (opcional: medicamentos de la receta), title (opcional), open (opcional).
+{% endcomment %}
+<details class="collapsible"{% if open %} open{% endif %}>
+    <summary><span><i class="fa-solid fa-file-medical mr-1"></i> {{ title|default:"Resultado de la consulta" }}</span></summary>
+    <div class="collapsible-body">
+        <div>
+            <div class="result-label">Diagnóstico</div>
+            <p class="result-text">{{ diagnosis|default:"Sin diagnóstico registrado." }}</p>
+        </div>
+        {% if indications %}
+            <div>
+                <div class="result-label">Indicaciones</div>
+                <p class="result-text">{{ indications }}</p>
+            </div>
+        {% endif %}
+        {% include 'panel/partials/medication_list.html' with meds=meds title="Receta médica" %}
+    </div>
+</details>

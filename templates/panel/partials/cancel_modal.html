@@ -1,0 +1,35 @@
+{% comment %}
+Modal de cancelación de cita (médico o paciente). Se abre con los botones .js-cancel-appointment
+(ver bindCancelButtons en panel.js). El motivo es obligatorio u opcional según data-reason-required.
+{% endcomment %}
+<div id="cancelModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cancelModalTitle">
+    <div class="modal-panel">
+        <button type="button" class="modal-close" data-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <h3 id="cancelModalTitle" class="modal-title">Cancelar cita</h3>
+        <p class="modal-text"><span id="cancelModalLabel">--</span>. Esta acción no se puede deshacer.</p>
+
+        <form id="cancelForm" class="space-y-4 mt-5" novalidate>
+            <div>
+                <label for="cancelReason" class="form-label">
+                    Motivo de la cancelación
+                    <span id="cancelReasonRequired" class="required">*</span>
+                    <span id="cancelReasonOptional" class="optional">(Opcional)</span>
+                </label>
+                <textarea id="cancelReason" name="reason" rows="3" maxlength="500" class="form-control" placeholder="Explica brevemente el motivo..."></textarea>
+            </div>
+
+            <div id="cancelAlert" class="form-alert" role="alert" hidden>
+                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                <span></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" data-modal-close>Volver</button>
+                <button type="submit" id="cancelSubmit" class="btn btn-danger">
+                    <i class="fa-solid fa-ban text-xs"></i>
+                    <span>Cancelar cita</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

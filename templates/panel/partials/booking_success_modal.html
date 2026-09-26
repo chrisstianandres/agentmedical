@@ -1,0 +1,23 @@
+{% comment %}
+Modal de confirmación de reserva. El resumen (#modalSummary) se rellena por JS.
+Parámetros opcionales: title, text, primary_url y primary_label (enlace principal),
+secondary_label (botón #successSecondary; su acción la define la página).
+{% endcomment %}
+<div id="successModal" class="modal-backdrop" data-dismissible="false" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="modal-panel text-center">
+        <div class="modal-icon-success"><i class="fa-solid fa-check"></i></div>
+        <h3 id="successTitle" class="modal-title">{{ title|default:"¡Cita Reservada Exitosamente!" }}</h3>
+        <p class="modal-text">{{ text|default:"Tu cita ha sido registrada. Estos son los detalles de la reserva." }}</p>
+
+        <div id="modalSummary" class="summary-box"></div>
+
+        <div class="flex flex-col gap-2 mt-6">
+            <a href="{{ primary_url|default:'/panel?action=myappointments' }}" class="btn btn-primary btn-block">
+                {{ primary_label|default:"Entendido / Ir a Mis Citas" }}
+            </a>
+            {% if secondary_label %}
+                <button type="button" id="successSecondary" class="btn btn-outline btn-block">{{ secondary_label }}</button>
+            {% endif %}
+        </div>
+    </div>
+</div>

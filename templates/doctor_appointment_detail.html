@@ -1,0 +1,272 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <a href="/panel?action=doctorappointments" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver a citas</a>
+
+        {% include 'panel/partials/patient_header.html' with p=patient_person patient=patient alergies=alergies %}
+
+        {% if slot_passed %}
+            {% if appointment.status == 'pendiente' or appointment.status == 'confirmada' %}
+                <div class="notice notice-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Registra el resultado pronto: las citas sin atención se cancelan automáticamente 2 h después del turno.</span>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Columna izquierda -->
+            <div class="space-y-6">
+                <div class="card card-body">
+                    <h2 class="card-title"><i class="fa-solid fa-calendar-check"></i> Datos de la cita</h2>
+                    <div class="info-list">
+                        <div class="info-row"><span class="info-label">Estado:</span><span>{% include 'panel/partials/status_badge.html' with a=appointment %}</span></div>
+                        <div class="info-row"><span class="info-label">Fecha:</span><span class="info-value">{{ appointment.appointment_date|date:"d/m/Y" }}</span></div>
+                        <div class="info-row"><span class="info-label">Hora:</span><span class="info-value">{{ appointment.appointment_time|time:"h:i A" }}</span></div>
+                        <div class="info-row"><span class="info-label">Especialidad:</span><span class="info-value">{{ appointment.speciality.title|default:"Consulta general" }}</span></div>
+                        <div class="info-row items-start"><span class="info-label">Motivo:</span><span class="info-value">{{ appointment.reason|default:"No indicado" }}</span></div>
+                        {% if appointment.attended_at %}
+                            <div class="info-row"><span class="info-label">Atendida:</span><span class="info-value">{{ appointment.attended_at|date:"d/m/Y H:i" }}</span></div>
+                        {% endif %}
+                    </div>
+                    {% if appointment.status == 'cancelada' %}{% include 'panel/partials/cancel_note.html' with a=appointment %}{% endif %}
+
+                    {% if can_confirm or appointment.status == 'pendiente' and not appointment.diagnosis or appointment.status == 'confirmada' and not appointment.diagnosis %}
+                        <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
+                            {% if can_confirm %}
+                                <button type="button" class="btn btn-soft btn-sm js-confirm" data-id="{{ appointment.id }}">
+                                    <i class="fa-solid fa-check"></i> <span>Confirmar</span>
+                                </button>
+                            {% endif %}
+                            {% if appointment.status == 'pendiente' or appointment.status == 'confirmada' %}{% if not appointment.diagnosis %}
+                                <button type="button" class="btn btn-danger-ghost btn-sm js-cancel-appointment"
+                                        data-id="{{ appointment.id }}" data-cancel-action="doctorcancelappointment" data-reason-required="1"
+                                        data-label="Cita de {{ patient_person.full_name }} el {{ appointment.appointment_date|date:'d/m/Y' }} a las {{ appointment.appointment_time|time:'h:i A' }}">
+                                    <i class="fa-solid fa-ban"></i> Cancelar
+                                </button>
+                            {% endif %}{% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card card-body">
+                    <h2 class="card-title"><i class="fa-solid fa-notes-medical"></i> Ficha médica</h2>
+                    {% if patient %}
+                        <div class="info-list">
+                            <div class="info-row"><span class="info-label">Tipo de Sangre:</span><span class="info-value blood-type">{% if patient.blood_group %}{{ patient.blood_group }}{{ patient.rh_factor|default:"" }}{% else %}No registrado{% endif %}</span></div>
+                            <div class="info-row items-start">
+                                <span class="info-label">Alergias:</span>
+                                <span class="flex flex-wrap justify-end gap-1">
+                                    {% for pa in alergies %}
+                                        <span class="badge badge-alert">{{ pa.alergy.name }}</span>
+                                    {% empty %}
+                                        <span class="info-value">Ninguna reportada</span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <div class="info-row"><span class="info-label">Nº Historia Clínica:</span><span class="info-value font-mono">{{ patient.medical_record_number|default:"--" }}</span></div>
+                            <div class="info-row"><span class="info-label">Peso:</span><span class="info-value">{% if patient.weight %}{{ patient.weight }} kg{% else %}--{% endif %}</span></div>
+                            <div class="info-row"><span class="info-label">Talla:</span><span class="info-value">{% if patient.height %}{{ patient.height }} cm{% else %}--{% endif %}</span></div>
+                        </div>
+                        <div class="info-divider mt-3">
+                            <div class="result-label">Contacto de emergencia</div>
+                            {% include 'panel/partials/emergency_contact.html' with patient=patient %}
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-500">El paciente aún no tiene una ficha médica registrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Columna derecha -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card card-body card-body-lg">
+                    <h2 class="card-title"><i class="fa-solid fa-file-medical"></i> Resultado de la consulta</h2>
+                    {% if can_record_result %}
+                        <form id="resultForm" class="space-y-4" novalidate>
+                            <div>
+                                <label for="diagnosis" class="form-label">Diagnóstico <span class="required">*</span></label>
+                                <textarea id="diagnosis" name="diagnosis" rows="4" maxlength="4000" class="form-control" placeholder="Describe el diagnóstico de la consulta..." required>{{ appointment.diagnosis|default:'' }}</textarea>
+                            </div>
+                            <div>
+                                <label for="indications" class="form-label">Indicaciones <span class="optional">(Opcional)</span></label>
+                                <textarea id="indications" name="indications" rows="3" maxlength="4000" class="form-control" placeholder="Reposo, dieta, controles, recomendaciones...">{{ appointment.indications|default:'' }}</textarea>
+                            </div>
+                            {% include 'panel/partials/medication_editor.html' with medications=medications %}
+                            <div class="flex justify-end">
+                                <button type="submit" id="resultSubmit" class="btn btn-primary">
+                                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                                    <span>{% if appointment.diagnosis %}Actualizar resultado{% else %}Guardar resultado{% endif %}</span>
+                                </button>
+                            </div>
+                        </form>
+                    {% elif appointment.status == 'cancelada' %}
+                        <div class="notice notice-danger"><i class="fa-solid fa-ban"></i><span>Cita cancelada: no se puede registrar un resultado.</span></div>
+                    {% elif appointment.diagnosis %}
+                        {% include 'panel/partials/consultation_result.html' with diagnosis=appointment.diagnosis indications=appointment.indications meds=medications open=True %}
+                    {% else %}
+                        <div class="notice"><i class="fa-solid fa-clock"></i><span>La cita aún no ocurre: podrás registrar el resultado a partir de la hora del turno.</span></div>
+                    {% endif %}
+                </div>
+
+                <div class="card card-body card-body-lg">
+                    <h2 class="card-title"><i class="fa-solid fa-calendar-plus"></i> Agendar nueva cita</h2>
+                    <p class="text-xs text-slate-500 -mt-1 mb-4">Programa una cita de seguimiento con este paciente en tus turnos disponibles.</p>
+                    <form id="followupForm" class="space-y-4" novalidate>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="followupDate" class="form-label">Fecha <span class="required">*</span></label>
+                                <input type="text" id="followupDate" class="form-control" disabled placeholder="Cargando fechas..." autocomplete="off">
+                                <p id="followupDateHint" class="form-hint" hidden>
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <span></span>
+                                </p>
+                            </div>
+                            <div>
+                                <span class="form-label">Turno <span class="required">*</span></span>
+                                <div id="followupSlots" class="slots-grid custom-scrollbar"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="followupReason" class="form-label">Motivo <span class="optional">(Opcional)</span></label>
+                            <textarea id="followupReason" rows="2" maxlength="500" class="form-control" placeholder="Ej.: Control de evolución, revisión de exámenes..."></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" id="followupSubmit" class="btn btn-primary" disabled>
+                                <i class="fa-solid fa-calendar-check text-xs"></i>
+                                <span>Agendar cita</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card card-body card-body-lg">
+                    <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Historial con este paciente</h2>
+                    {% if history %}
+                        <div class="timeline">
+                            {% for h in history %}
+                                <div class="timeline-item">
+                                    <div class="timeline-head">
+                                        <span class="timeline-date">{{ h.appointment_date|date:"d/m/Y" }} · {{ h.appointment_time|time:"h:i A" }}</span>
+                                        {% include 'panel/partials/status_badge.html' with a=h %}
+                                        {% if h.speciality %}<span class="text-accent">{{ h.speciality.title }}</span>{% endif %}
+                                    </div>
+                                    {% if h.status == 'cancelada' %}{% include 'panel/partials/cancel_note.html' with a=h %}{% endif %}
+                                    {% if h.diagnosis %}
+                                        {% if h.attended_at %}
+                                            {% with attended=h.attended_at|date:"d/m/Y" %}
+                                                {% include 'panel/partials/consultation_result.html' with diagnosis=h.diagnosis indications=h.indications meds=h.medications.all title="Diagnóstico e indicaciones · atendida el "|add:attended %}
+                                            {% endwith %}
+                                        {% else %}
+                                            {% include 'panel/partials/consultation_result.html' with diagnosis=h.diagnosis indications=h.indications meds=h.medications.all title="Diagnóstico e indicaciones" %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-500">No hay citas previas con este paciente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% include 'panel/partials/cancel_modal.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const APPOINTMENT_ID = '{{ appointment.id }}';
+            const DOCTOR_ID = '{{ appointment.doctor_id }}';
+
+            bindConfirmButtons();
+            bindCancelButtons();
+
+            // Resultado de la consulta
+            const resultForm = document.getElementById('resultForm');
+            if (resultForm) {
+                const resultBtn = document.getElementById('resultSubmit');
+                const meds = MedicationEditor.create({
+                    container: document.getElementById('medEditor'),
+                    template: document.getElementById('medRowTemplate'),
+                    addButton: document.getElementById('medAddBtn'),
+                    emptyEl: document.getElementById('medEmpty'),
+                    initial: MedicationEditor.readInitial('medicationsData')
+                });
+                resultForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const diagnosis = document.getElementById('diagnosis').value.trim();
+                    if (!diagnosis) {
+                        showToast('El diagnóstico es obligatorio.', 'error');
+                        document.getElementById('diagnosis').focus();
+                        return;
+                    }
+                    const medError = meds.validate();
+                    if (medError) {
+                        showToast(medError, 'error');
+                        return;
+                    }
+                    setButtonLoading(resultBtn, true, 'Guardando...');
+                    postAction({
+                        action: 'saveresult',
+                        id: APPOINTMENT_ID,
+                        diagnosis: diagnosis,
+                        indications: document.getElementById('indications').value.trim(),
+                        medications: meds.serialize()   // siempre se envía ('[]' borra la receta)
+                    }).done(function (response) {
+                        if (response && response.result === 'ok') {
+                            reloadWithInfo(response.mensaje || 'Resultado guardado correctamente.');
+                        } else {
+                            showToast((response && response.mensaje) || 'No se pudo guardar el resultado.', 'error');
+                            meds.highlightFromMessage(response && response.mensaje);
+                            setButtonLoading(resultBtn, false);
+                        }
+                    }).fail(function () {
+                        showToast('Error de conexión al guardar el resultado.', 'error');
+                        setButtonLoading(resultBtn, false);
+                    });
+                });
+            }
+
+            // Cita de seguimiento: misma lógica de fecha + turnos que Reservar y Reagendar
+            const followupBtn = document.getElementById('followupSubmit');
+            const picker = SlotPicker.create({
+                dateInput: document.getElementById('followupDate'),
+                slotsBox: document.getElementById('followupSlots'),
+                dateHint: document.getElementById('followupDateHint'),
+                onChange: function (state) { followupBtn.disabled = !(state.date && state.time); }
+            });
+            picker.load(DOCTOR_ID);
+
+            document.getElementById('followupForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (followupBtn.disabled) return;
+                setButtonLoading(followupBtn, true, 'Agendando...');
+                postAction({
+                    action: 'followupappointment',
+                    id: APPOINTMENT_ID,
+                    date: picker.state.date,
+                    time: picker.state.time,
+                    reason: document.getElementById('followupReason').value.trim()
+                }).done(function (response) {
+                    if (response && response.result === 'ok') {
+                        const d = response.data || {};
+                        const when = d.date ? ' para el ' + d.date.split('-').reverse().join('/') + (d.time ? ' a las ' + d.time : '') : '';
+                        const msg = 'Cita de seguimiento agendada' + when + ' (pendiente de confirmar).';
+                        showToast(msg);
+                        reloadWithInfo(msg);
+                    } else {
+                        showToast((response && response.mensaje) || 'No se pudo agendar la cita.', 'error');
+                        setButtonLoading(followupBtn, false);
+                        picker.reloadSlots();
+                    }
+                }).fail(function () {
+                    showToast('Error de conexión al agendar la cita.', 'error');
+                    setButtonLoading(followupBtn, false);
+                });
+            });
+        })();
+    </script>
+{% endblock %}

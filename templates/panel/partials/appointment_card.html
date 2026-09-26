@@ -1,0 +1,168 @@
+{% comment %}
+Tarjeta de cita.
+Parámetros:
+  a (Appointment)
+  mode ('patient' por defecto: muestra al médico | 'doctor': agenda con el paciente como protagonista
+        | 'admin': hora destacada con paciente y médico, y acciones de administración)
+  actions (bool, modo paciente: mostrar Reagendar/Cancelar)
+Requiere incluir panel/partials/cancel_modal.html en la página si hay botones de cancelar.
+{% endcomment %}
+{% if mode == 'admin' %}
+<article class="card card-body appt-card">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="appt-agenda min-w-0">
+            <div class="time-block" aria-label="Hora de la cita">
+                <span class="time-block-hour">{{ a.appointment_time|time:"h:i" }}</span>
+                <span class="time-block-ampm">{{ a.appointment_time|time:"A" }}</span>
+                <span class="time-block-date">{{ a.appointment_date|date:"D d M" }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    {% include 'panel/partials/status_badge.html' with a=a %}
+                    <span class="text-accent">{{ a.speciality.title|default:"Consulta general" }}</span>
+                </div>
+                <div class="appt-people">
+                    <div class="min-w-0">
+                        <div class="appt-person-label"><i class="fa-solid fa-user"></i> Paciente</div>
+                        <div class="appt-person-name">{{ a.patient.person.full_name }}</div>
+                        <div class="appt-person-sub">{% if a.patient.person.document %}C.I. {{ a.patient.person.document }}{% endif %}{% if a.patient.medical_record_number %} · {{ a.patient.medical_record_number }}{% endif %}</div>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="appt-person-label"><i class="fa-solid fa-user-doctor"></i> Médico</div>
+                        <div class="appt-person-name">{{ a.doctor.person.full_name }}</div>
+                        <div class="appt-person-sub">{{ a.doctor.office|default:"Consultorio por asignar" }}</div>
+                    </div>
+                </div>
+                {% if a.reason %}<p class="text-xs text-slate-500 mt-2 line-clamp-2"><span class="font-medium text-slate-600">Motivo:</span> {{ a.reason }}</p>{% endif %}
+                {% if a.status == 'cancelada' %}{% include 'panel/partials/cancel_note.html' with a=a %}{% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100">
+            {% if a.status == 'pendiente' %}
+                <button type="button" class="btn btn-soft btn-sm js-confirm" data-id="{{ a.id }}" data-confirm-action="adminconfirmappointment">
+                    <i class="fa-solid fa-check"></i> <span>Confirmar</span>
+                </button>
+            {% endif %}
+            {% if a.status == 'pendiente' or a.status == 'confirmada' %}
+                <button type="button" class="btn btn-outline btn-sm js-reschedule"
+                        data-id="{{ a.id }}"
+                        data-doctor-id="{{ a.doctor_id }}"
+                        data-doctor-name="{{ a.doctor.person.full_name }}"
+                        data-current="{{ a.appointment_date|date:'d/m/Y' }} · {{ a.appointment_time|time:'h:i A' }}"
+                        data-reschedule-action="adminrescheduleappointment">
+                    <i class="fa-solid fa-calendar-days"></i> Reagendar
+                </button>
+                <button type="button" class="btn btn-danger-ghost btn-sm js-cancel-appointment"
+                        data-id="{{ a.id }}" data-cancel-action="admincancelappointment" data-reason-required="1"
+                        data-label="Cita de {{ a.patient.person.full_name }} con {{ a.doctor.person.full_name }} el {{ a.appointment_date|date:'d/m/Y' }} a las {{ a.appointment_time|time:'h:i A' }}">
+                    Cancelar
+                </button>
+            {% endif %}
+            <a href="/panel?action=adminnewappointment&patient={{ a.patient_id }}" class="btn btn-soft btn-sm" title="Nueva cita para este paciente">
+                <i class="fa-solid fa-calendar-plus"></i> Nueva cita
+            </a>
+        </div>
+    </div>
+</article>
+{% elif mode == 'doctor' %}
+<article class="card card-body appt-card"
+         data-when="{{ a.appointment_date|date:'Y-m-d' }}T{{ a.appointment_time|time:'H:i' }}"
+         {% if a.status == 'pendiente' or a.status == 'confirmada' %}data-next-candidate="1"{% endif %}>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="appt-agenda min-w-0">
+            <div class="time-block" aria-label="Hora de la cita">
+                <span class="time-block-hour">{{ a.appointment_time|time:"h:i" }}</span>
+                <span class="time-block-ampm">{{ a.appointment_time|time:"A" }}</span>
+                <span class="time-block-date">{{ a.appointment_date|date:"D d M" }}</span>
+            </div>
+            <img src="{{ a.patient.person.get_photo }}" alt="{{ a.patient.person.full_name }}" class="avatar-square avatar-patient hidden sm:block">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="patient-tag"><i class="fa-solid fa-user"></i> Paciente</span>
+                    {% include 'panel/partials/status_badge.html' with a=a %}
+                    <span class="next-flag" data-next-flag hidden><i class="fa-solid fa-bolt"></i> Próxima</span>
+                </div>
+                <h3 class="patient-name mt-1">{{ a.patient.person.full_name }}</h3>
+                <p class="patient-facts">
+                    {% if a.patient.person.document %}<span><i class="fa-solid fa-id-card"></i>C.I. {{ a.patient.person.document }}</span>{% endif %}
+                    {% if a.patient.person.age or a.patient.person.age == 0 %}<span><i class="fa-solid fa-cake-candles"></i>{{ a.patient.person.age }} año{{ a.patient.person.age|pluralize }}</span>{% endif %}
+                    {% if a.patient.medical_record_number %}<span><i class="fa-solid fa-folder-open" title="Historia clínica"></i>{{ a.patient.medical_record_number }}</span>{% endif %}
+                </p>
+                <p class="text-accent font-medium mt-1">{{ a.speciality.title|default:"Consulta general" }}</p>
+                {% if a.reason %}<p class="text-xs text-slate-500 mt-1 line-clamp-2"><span class="font-medium text-slate-600">Motivo:</span> {{ a.reason }}</p>{% endif %}
+                {% if a.status == 'cancelada' %}{% include 'panel/partials/cancel_note.html' with a=a %}{% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+            {% if a.status == 'pendiente' %}
+                <button type="button" class="btn btn-soft btn-sm js-confirm" data-id="{{ a.id }}">
+                    <i class="fa-solid fa-check"></i> <span>Confirmar</span>
+                </button>
+            {% endif %}
+            {% if a.status == 'pendiente' or a.status == 'confirmada' %}
+                {% if not a.diagnosis %}
+                    <button type="button" class="btn btn-danger-ghost btn-sm js-cancel-appointment"
+                            data-id="{{ a.id }}" data-cancel-action="doctorcancelappointment" data-reason-required="1"
+                            data-label="Cita de {{ a.patient.person.full_name }} el {{ a.appointment_date|date:'d/m/Y' }} a las {{ a.appointment_time|time:'h:i A' }}">
+                        Cancelar
+                    </button>
+                {% endif %}
+                <a href="/panel?action=doctorappointmentdetail&id={{ a.id }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-stethoscope"></i> Atender
+                </a>
+            {% else %}
+                <a href="/panel?action=doctorappointmentdetail&id={{ a.id }}" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-eye"></i> Ver detalle
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if a.status == 'realizada' and a.diagnosis %}
+        {% include 'panel/partials/consultation_result.html' with diagnosis=a.diagnosis indications=a.indications meds=a.medications.all %}
+    {% endif %}
+</article>
+{% else %}
+<article class="card card-body">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+            <img src="{{ a.doctor.person.get_photo }}" alt="{{ a.doctor.person.full_name }}" class="avatar-square avatar-md">
+            <div class="min-w-0">
+                {% include 'panel/partials/status_badge.html' with a=a %}
+                <h3 class="font-bold text-slate-900 text-base mt-1">{{ a.doctor.person.full_name }}</h3>
+                <p class="text-accent font-medium">{{ a.speciality.title|default:"Consulta general" }}</p>
+                <p class="meta-list">
+                    <span><i class="fa-regular fa-calendar"></i>{{ a.appointment_date|date:"d/m/Y" }}</span>
+                    <span><i class="fa-regular fa-clock"></i>{{ a.appointment_time|time:"h:i A" }}</span>
+                    <span><i class="fa-solid fa-location-dot meta-location"></i>{{ a.doctor.office|default:"Consultorio por asignar" }}</span>
+                </p>
+                {% if a.reason %}<p class="text-xs text-slate-500 mt-1 line-clamp-2"><span class="font-medium text-slate-600">Motivo:</span> {{ a.reason }}</p>{% endif %}
+                {% if a.status == 'cancelada' %}{% include 'panel/partials/cancel_note.html' with a=a %}{% endif %}
+            </div>
+        </div>
+
+        {% if actions %}
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                <button type="button" class="btn btn-soft btn-sm js-reschedule"
+                        data-id="{{ a.id }}"
+                        data-doctor-id="{{ a.doctor_id }}"
+                        data-doctor-name="{{ a.doctor.person.full_name }}"
+                        data-current="{{ a.appointment_date|date:'d/m/Y' }} · {{ a.appointment_time|time:'h:i A' }}">
+                    Reagendar
+                </button>
+                <button type="button" class="btn btn-danger-ghost btn-sm js-cancel-appointment"
+                        data-id="{{ a.id }}" data-cancel-action="cancelappointment" data-reason-required="0"
+                        data-label="Cita con {{ a.doctor.person.full_name }} el {{ a.appointment_date|date:'d/m/Y' }} a las {{ a.appointment_time|time:'h:i A' }}">
+                    Cancelar
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if a.status == 'realizada' and a.diagnosis %}
+        {% include 'panel/partials/consultation_result.html' with diagnosis=a.diagnosis indications=a.indications meds=a.medications.all %}
+    {% endif %}
+</article>
+{% endif %}

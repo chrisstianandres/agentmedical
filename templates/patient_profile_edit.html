@@ -1,0 +1,330 @@
+{% extends 'panel_base.html' %}
+{% load l10n %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <a href="/panel?action=profile" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver a mi perfil</a>
+            <span class="form-note">Cada sección se guarda por separado.</span>
+        </div>
+
+        {% include 'panel/partials/profile_header.html' with photo=person.get_photo name=person.full_name subtitle="Editar perfil de paciente" photo_id='headerPhoto' %}
+
+        <!-- Pestañas (solo móvil) -->
+        <nav class="section-tabs" aria-label="Secciones del perfil">
+            <button type="button" class="section-tab is-active" data-section-tab="secPersonal"><i class="fa-solid fa-user"></i> Personales</button>
+            <button type="button" class="section-tab" data-section-tab="secContact"><i class="fa-solid fa-location-dot"></i> Contacto</button>
+            <button type="button" class="section-tab" data-section-tab="secMedical"><i class="fa-solid fa-notes-medical"></i> Ficha médica</button>
+            <button type="button" class="section-tab" data-section-tab="secAlergies"><i class="fa-solid fa-triangle-exclamation"></i> Alergias</button>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+            <!-- 1. Datos personales -->
+            <form id="secPersonal" class="edit-section is-current card card-body card-body-lg" enctype="multipart/form-data" novalidate>
+                <h2 class="card-title"><i class="fa-solid fa-user"></i> Datos personales</h2>
+                {% include 'panel/partials/person_personal_fields.html' with p=person show_photo=True show_hc=True hc=patient.medical_record_number|default:'--' %}
+                <div class="section-foot">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk text-xs"></i> <span>Guardar</span></button>
+                </div>
+            </form>
+
+            <!-- 2. Contacto y dirección -->
+            <form id="secContact" class="edit-section card card-body card-body-lg" novalidate>
+                <h2 class="card-title"><i class="fa-solid fa-location-dot"></i> Contacto y dirección</h2>
+                {% include 'panel/partials/person_contact_fields.html' with p=person %}
+                <div class="section-foot">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk text-xs"></i> <span>Guardar</span></button>
+                </div>
+            </form>
+
+            <!-- 3. Ficha médica -->
+            <form id="secMedical" class="edit-section card card-body card-body-lg" novalidate>
+                <h2 class="card-title"><i class="fa-solid fa-notes-medical"></i> Ficha médica</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="blood_group" class="form-label">Grupo sanguíneo</label>
+                        <div class="select-wrap">
+                            <select id="blood_group" name="blood_group" class="form-control" data-error-keys="grupo sanguíneo,grupo sanguineo">
+                                <option value="">-- Sin registrar --</option>
+                                {% for g in blood_group_choices %}<option value="{{ g }}"{% if g == patient.blood_group %} selected{% endif %}>{{ g }}</option>{% endfor %}
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="rh_factor" class="form-label">Factor RH</label>
+                        <div class="select-wrap">
+                            <select id="rh_factor" name="rh_factor" class="form-control" data-error-keys="rh">
+                                <option value="">-- Sin registrar --</option>
+                                {% for r in rh_choices %}<option value="{{ r }}"{% if r == patient.rh_factor %} selected{% endif %}>{% if r == '+' %}Positivo (+){% elif r == '-' %}Negativo (−){% else %}{{ r }}{% endif %}</option>{% endfor %}
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="weight" class="form-label">Peso (kg)</label>
+                        <input type="number" id="weight" name="weight" min="0" max="500" step="0.1" class="form-control" value="{{ patient.weight|default_if_none:''|unlocalize }}" data-error-keys="peso" placeholder="Ej.: 70">
+                    </div>
+                    <div>
+                        <label for="height" class="form-label">Talla (cm)</label>
+                        <input type="number" id="height" name="height" min="0" max="300" step="0.1" class="form-control" value="{{ patient.height|default_if_none:''|unlocalize }}" data-error-keys="talla,altura" placeholder="Ej.: 170">
+                        <span id="bmiOutput" class="computed is-muted"></span>
+                    </div>
+                    <div>
+                        <label for="blood_pressure" class="form-label">Presión arterial</label>
+                        <input type="text" id="blood_pressure" name="blood_pressure" maxlength="50" class="form-control" value="{{ patient.blood_pressure|default:'' }}" data-error-keys="presión,presion" placeholder="Ej.: 120/80">
+                    </div>
+                    <div>
+                        <label for="insurance_number" class="form-label">Número de seguro</label>
+                        <input type="text" id="insurance_number" name="insurance_number" maxlength="20" class="form-control" value="{{ patient.insurance_number|default:'' }}" data-error-keys="seguro">
+                    </div>
+                    <div class="sm:col-span-2 pt-2">
+                        <h3 class="card-title"><i class="fa-solid fa-phone-volume"></i> Contacto de emergencia</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label for="emergency_contact_name" class="form-label">Nombre</label>
+                                <input type="text" id="emergency_contact_name" name="emergency_contact_name" maxlength="150" class="form-control" value="{{ patient.emergency_contact_name|default:'' }}" data-error-keys="nombre del contacto,contacto de emergencia" placeholder="Nombre y apellido">
+                            </div>
+                            <div>
+                                <label for="emergencyRelPreset" class="form-label">Parentesco</label>
+                                <div class="select-wrap">
+                                    <select id="emergencyRelPreset" class="form-control" data-current="{{ patient.emergency_contact_relationship|default:'' }}">
+                                        <option value="">-- Seleccionar --</option>
+                                        <option>Esposo/a</option>
+                                        <option>Padre</option>
+                                        <option>Madre</option>
+                                        <option>Hijo/a</option>
+                                        <option>Hermano/a</option>
+                                        <option>Otro familiar</option>
+                                        <option>Amigo/a</option>
+                                        <option value="__other__">Otro</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                                </div>
+                                <input type="text" id="emergency_contact_relationship" name="emergency_contact_relationship" maxlength="50" class="form-control mt-2" placeholder="Especifica el parentesco" data-error-keys="parentesco" hidden>
+                            </div>
+                            <div>
+                                <label for="emergency_contact_phone" class="form-label">Teléfono</label>
+                                <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" maxlength="50" class="form-control" value="{{ patient.emergency_contact_phone|default:'' }}" data-error-keys="teléfono del contacto,telefono del contacto,teléfono de emergencia" placeholder="Ej.: 0991234567">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <span class="form-label">Diabetes</span>
+                        <label class="switch">
+                            <input type="checkbox" id="diabetes" name="diabetes" value="1"{% if patient.diabetes %} checked{% endif %}>
+                            <span class="switch-track" aria-hidden="true"></span>
+                            <span>El paciente tiene diabetes</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="section-foot">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk text-xs"></i> <span>Guardar</span></button>
+                </div>
+            </form>
+
+            <!-- 4. Alergias -->
+            <form id="secAlergies" class="edit-section card card-body card-body-lg" novalidate>
+                <h2 class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> Alergias</h2>
+                <div class="space-y-4">
+                    <p class="text-xs text-slate-500">Marca las alergias que tienes. Si no aparece, agrégala abajo.</p>
+                    <div id="alergyChips" class="chip-group">
+                        {% for al in alergy_catalog %}
+                            <label class="check-chip">
+                                <input type="checkbox" name="alergies" value="{{ al.id }}"{% if al.id|stringformat:"s" in patient_alergy_ids %} checked{% endif %}>
+                                <span>{{ al.name }}</span>
+                            </label>
+                        {% empty %}
+                            <p id="alergyCatalogEmpty" class="form-note">Aún no hay alergias en el catálogo; agrega las tuyas abajo.</p>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="newAlergy" class="form-label">Agregar otra alergia</label>
+                        <div class="input-group">
+                            <input type="text" id="newAlergy" maxlength="100" class="form-control" placeholder="Ej.: Penicilina" data-error-keys="alergia">
+                            <button type="button" id="addAlergyBtn" class="btn btn-soft btn-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+                        </div>
+                        <p class="form-note mt-1">Pulsa Enter o «Agregar». Las nuevas se crearán al guardar.</p>
+                    </div>
+                </div>
+                <div class="section-foot">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk text-xs"></i> <span>Guardar</span></button>
+                </div>
+            </form>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            bindSectionTabs();
+
+            /* 1. Datos personales */
+            const personal = document.getElementById('secPersonal');
+            const photoInput = document.getElementById('personalPhoto');
+            bindPhotoPreview(photoInput, document.getElementById('headerPhoto'));
+            initBirthdateField(document.getElementById('birthdate'), document.getElementById('ageOutput'));
+            bindSectionForm(personal, {
+                action: 'savepersonal',
+                multipart: true,
+                validate: validatePersonalFields,
+                collect: function (f) {
+                    const data = new FormData(f);
+                    if (!photoInput.files[0]) data.delete('photo');
+                    return data;
+                },
+                onSuccess: function (response) {
+                    // La foto y el nombre aparecen en la barra superior: recargar para reflejarlos
+                    reloadWithInfo(response.mensaje || 'Datos personales actualizados.');
+                }
+            });
+
+            /* 2. Contacto y dirección */
+            bindLocationCascade(document.getElementById('secContact'));
+            bindSectionForm(document.getElementById('secContact'), {
+                action: 'savecontact',
+                validate: validateContactFields
+            });
+
+            /* 3. Ficha médica */
+            const medical = document.getElementById('secMedical');
+            const bmiOutput = document.getElementById('bmiOutput');
+            function updateBMI() {
+                const bmi = calcBMI(medical.weight.value, medical.height.value);
+                bmiOutput.className = 'computed' + (bmi ? ' bmi-' + bmi.tone : ' is-muted');
+                bmiOutput.innerHTML = bmi
+                    ? '<i class="fa-solid fa-weight-scale"></i> IMC ' + bmi.value + ' · ' + escapeHtml(bmi.label)
+                    : 'IMC: ingresa peso y talla';
+            }
+            medical.weight.addEventListener('input', updateBMI);
+            medical.height.addEventListener('input', updateBMI);
+            updateBMI();
+
+            // Parentesco: preset o "Otro" con texto libre
+            const relPreset = document.getElementById('emergencyRelPreset');
+            const relOther = document.getElementById('emergency_contact_relationship');
+            (function () {
+                const current = relPreset.dataset.current;
+                const isPreset = Array.prototype.some.call(relPreset.options, function (o) {
+                    return o.value !== '__other__' && o.value === current;
+                });
+                relPreset.value = isPreset || !current ? current : '__other__';
+                relOther.value = isPreset ? '' : current;
+                relOther.hidden = relPreset.value !== '__other__';
+            })();
+            relPreset.addEventListener('change', function () {
+                relOther.hidden = relPreset.value !== '__other__';
+                if (!relOther.hidden) relOther.focus();
+            });
+
+            bindSectionForm(medical, {
+                action: 'savemedical',
+                validate: function (f) {
+                    const errors = [];
+                    const w = f.weight.value, h = f.height.value;
+                    if (w !== '' && !(Number(w) >= 0 && Number(w) <= 500)) errors.push(['weight', 'El peso debe estar entre 0 y 500 kg.']);
+                    if (h !== '' && !(Number(h) >= 0 && Number(h) <= 300)) errors.push(['height', 'La talla debe estar entre 0 y 300 cm.']);
+                    const ecName = f.emergency_contact_name.value.trim();
+                    const ecPhone = f.emergency_contact_phone.value.trim();
+                    if (ecName && !ecPhone) errors.push(['emergency_contact_phone', 'Indica el teléfono del contacto de emergencia.']);
+                    if (ecPhone && !ecName) errors.push(['emergency_contact_name', 'Indica el nombre del contacto de emergencia.']);
+                    if (relPreset.value === '__other__' && !relOther.value.trim()) errors.push(['emergency_contact_relationship', 'Especifica el parentesco.']);
+                    return errors;
+                },
+                collect: function (f) {
+                    return {
+                        blood_group: f.blood_group.value,
+                        rh_factor: f.rh_factor.value,
+                        weight: f.weight.value,
+                        height: f.height.value,
+                        blood_pressure: f.blood_pressure.value.trim(),
+                        diabetes: f.diabetes.checked ? '1' : '0',
+                        insurance_number: f.insurance_number.value.trim(),
+                        emergency_contact_name: f.emergency_contact_name.value.trim(),
+                        emergency_contact_relationship: relPreset.value === '__other__' ? relOther.value.trim() : relPreset.value,
+                        emergency_contact_phone: f.emergency_contact_phone.value.trim()
+                    };
+                }
+            });
+
+            /* 4. Alergias */
+            const alergiesForm = document.getElementById('secAlergies');
+            const chips = document.getElementById('alergyChips');
+            const newInput = document.getElementById('newAlergy');
+
+            function chipExists(name) {
+                const target = name.trim().toLowerCase();
+                return Array.prototype.some.call(chips.querySelectorAll('.check-chip span'), function (s) {
+                    return s.textContent.trim().toLowerCase() === target;
+                });
+            }
+
+            function makeChip(inputName, value, text, isNew) {
+                const label = document.createElement('label');
+                label.className = 'check-chip' + (isNew ? ' is-new' : '');
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = inputName;
+                input.value = value;
+                input.checked = true;
+                const span = document.createElement('span');
+                span.textContent = text;
+                if (isNew) {
+                    // Desmarcar una alergia nueva la descarta
+                    input.addEventListener('change', function () { if (!input.checked) label.remove(); });
+                    const x = document.createElement('i');
+                    x.className = 'fa-solid fa-xmark chip-remove';
+                    span.appendChild(x);
+                }
+                label.appendChild(input);
+                label.appendChild(span);
+                const empty = document.getElementById('alergyCatalogEmpty');
+                if (empty) empty.remove();
+                chips.appendChild(label);
+            }
+
+            function addNewAlergy() {
+                const name = newInput.value.trim().replace(/,/g, ' ');
+                if (!name) return;
+                if (chipExists(name)) {
+                    showToast('Esa alergia ya está en la lista.', 'error');
+                    return;
+                }
+                makeChip('new_alergy_chip', name, name, true);
+                newInput.value = '';
+                newInput.focus();
+            }
+            document.getElementById('addAlergyBtn').addEventListener('click', addNewAlergy);
+            newInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); addNewAlergy(); }
+            });
+
+            bindSectionForm(alergiesForm, {
+                action: 'savealergies',
+                collect: function (f) {
+                    const ids = Array.prototype.map.call(f.querySelectorAll('input[name="alergies"]:checked'), function (i) { return i.value; });
+                    const news = Array.prototype.map.call(f.querySelectorAll('input[name="new_alergy_chip"]:checked'), function (i) { return i.value; });
+                    return {alergies: ids, new_alergies: news.join(', ')};
+                },
+                onSuccess: function (response) {
+                    const saved = (response.data && response.data.alergies) || [];
+                    const savedIds = saved.map(function (a) { return String(a.id); });
+                    chips.querySelectorAll('.check-chip.is-new').forEach(function (c) { c.remove(); });
+                    chips.querySelectorAll('input[name="alergies"]').forEach(function (i) {
+                        i.checked = savedIds.indexOf(i.value) !== -1;
+                    });
+                    saved.forEach(function (a) {
+                        if (!chips.querySelector('input[name="alergies"][value="' + CSS.escape(String(a.id)) + '"]')) {
+                            makeChip('alergies', a.id, a.name, false);
+                        }
+                    });
+                    // Mantener los chips ordenados por nombre
+                    Array.prototype.slice.call(chips.querySelectorAll('.check-chip'))
+                        .sort(function (x, y) { return x.textContent.trim().localeCompare(y.textContent.trim(), 'es'); })
+                        .forEach(function (c) { chips.appendChild(c); });
+                }
+            });
+        })();
+    </script>
+{% endblock %}

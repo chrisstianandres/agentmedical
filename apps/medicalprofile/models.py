@@ -19,8 +19,11 @@ class ProfileMedical(ModeloBase):
     from apps.core.models import Person
     person = models.ForeignKey(Person, blank=True, null=True, verbose_name='Persona', on_delete=models.CASCADE)
     type = models.ForeignKey(TypeProfileMedical, blank=True, null=True, verbose_name='Tipo de perfil medico', on_delete=models.CASCADE)
-    aboutme = models.TextField(default='', max_length=100, verbose_name='About me profile')
+    aboutme = models.TextField(default='', verbose_name='About me profile')
     isprincipal = models.BooleanField(default=True, verbose_name='Is principal profile')
+    years_experience = models.PositiveIntegerField(default=0, verbose_name='Años de experiencia')
+    office = models.CharField(default='', max_length=150, blank=True, verbose_name='Consultorio')
+    consultation_price = models.DecimalField(default=0, max_digits=8, decimal_places=2, verbose_name='Precio de consulta')
 
 
     def __str__(self):

@@ -1,0 +1,131 @@
+{% extends 'panel_base.html' %}
+{% load l10n %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        {% if doctor %}
+            {% include 'panel/partials/profile_header.html' with photo=person.get_photo name=person.full_name subtitle="Médico especialista" specs=specialities spec_ids=doctor_speciality_ids location=person.full_residence_country photo_id='headerPhoto' %}
+        {% else %}
+            <div>
+                <h1 class="page-title">Crear perfil médico</h1>
+                <p class="page-subtitle">Completa tu información profesional para aparecer en el Directorio Médico y recibir reservas.</p>
+            </div>
+        {% endif %}
+
+        <form id="doctorProfileForm" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Información profesional -->
+            <div class="lg:col-span-2 card card-body card-body-lg space-y-5">
+                <h2 class="card-title"><i class="fa-solid fa-briefcase-medical"></i> Información Profesional</h2>
+
+                <div>
+                    <span class="form-label">Especialidades <span class="required">*</span></span>
+                    <div class="chip-group">
+                        {% for s in specialities %}
+                            <label class="check-chip">
+                                <input type="checkbox" name="specialities" value="{{ s.id }}"{% if s.id|stringformat:"s" in doctor_speciality_ids %} checked{% endif %}>
+                                <span>{{ s.title }}</span>
+                            </label>
+                        {% empty %}
+                            <p class="form-note">No hay especialidades registradas.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="aboutme" class="form-label">Acerca de mí <span class="optional">(se muestra a los pacientes)</span></label>
+                    <textarea id="aboutme" name="aboutme" rows="4" maxlength="2000" class="form-control" placeholder="Describe tu formación, enfoque y experiencia profesional...">{{ doctor.aboutme|default:'' }}</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="yearsExperience" class="form-label">Años de experiencia</label>
+                        <input type="number" id="yearsExperience" name="years_experience" min="0" max="80" step="1" class="form-control" value="{{ doctor.years_experience|default_if_none:0|unlocalize }}">
+                    </div>
+                    <div>
+                        <label for="consultationPrice" class="form-label">Precio consulta (USD)</label>
+                        <input type="number" id="consultationPrice" name="consultation_price" min="0" step="0.01" class="form-control" value="{{ doctor.consultation_price|default_if_none:''|unlocalize }}" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label for="office" class="form-label">Consultorio</label>
+                        <input type="text" id="office" name="office" maxlength="150" class="form-control" value="{{ doctor.office|default:'' }}" placeholder="Ej.: Torre A - Cons. 304">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacto y foto -->
+            <div class="card card-body card-body-lg space-y-5">
+                <h2 class="card-title"><i class="fa-solid fa-address-card"></i> Contacto y Foto</h2>
+
+                <div>
+                    <span class="form-label">Fotografía <span class="optional">(JPG, PNG o WEBP, máx. 5 MB)</span></span>
+                    <div class="photo-picker">
+                        <img id="photoPreview" src="{{ person.get_photo }}" alt="Vista previa de la foto" class="photo-preview">
+                        <input type="file" id="doctorPhoto" name="photo" class="form-control" accept="image/jpeg,image/png,image/webp" aria-label="Fotografía">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="doctorCellphone" class="form-label">Teléfono Móvil <span class="required">*</span></label>
+                    <input type="tel" id="doctorCellphone" name="cellphonenumber" maxlength="50" class="form-control" value="{{ person.cellphonenumber }}" required>
+                </div>
+
+                <div>
+                    <label for="doctorEmail" class="form-label">Correo Electrónico <span class="required">*</span></label>
+                    <input type="email" id="doctorEmail" name="email" class="form-control" value="{{ person.email }}" required>
+                </div>
+
+                <button type="submit" id="doctorProfileSubmit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                    <span>{% if doctor %}Guardar cambios{% else %}Crear perfil{% endif %}</span>
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const form = document.getElementById('doctorProfileForm');
+            const submitBtn = document.getElementById('doctorProfileSubmit');
+            const photoInput = document.getElementById('doctorPhoto');
+
+            bindPhotoPreview(photoInput, document.getElementById('photoPreview'));
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!form.querySelector('input[name="specialities"]:checked')) {
+                    showToast('Selecciona al menos una especialidad.', 'error');
+                    return;
+                }
+                if (!form.reportValidity()) return;
+                const photo = photoInput.files[0];
+                const photoError = validatePhoto(photo);
+                if (photoError) {
+                    showToast(photoError, 'error');
+                    return;
+                }
+
+                const data = new FormData(form);
+                data.append('action', 'savedoctorprofile');
+                if (!photo) data.delete('photo');
+
+                setButtonLoading(submitBtn, true, 'Guardando...');
+                postAction(data)
+                    .done(function (response) {
+                        if (response && response.result === 'ok') {
+                            reloadWithInfo(response.mensaje || 'Perfil médico guardado correctamente.');
+                        } else {
+                            showToast((response && response.mensaje) || 'No se pudo guardar el perfil médico.', 'error');
+                            setButtonLoading(submitBtn, false);
+                        }
+                    })
+                    .fail(function () {
+                        showToast('Error de conexión al guardar el perfil médico.', 'error');
+                        setButtonLoading(submitBtn, false);
+                    });
+            });
+        })();
+    </script>
+{% endblock %}

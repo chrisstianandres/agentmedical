@@ -1,0 +1,47 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div>
+            <h1 class="page-title">Configuración de la Cuenta</h1>
+            <p class="page-subtitle">Gestiona la seguridad de tu cuenta y tus preferencias de notificación.</p>
+        </div>
+
+        <div class="max-w-3xl space-y-6">
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-lock"></i> Seguridad y Privacidad</h2>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-title">Cambiar Contraseña</div>
+                        <div class="setting-text">Actualiza periódicamente tu contraseña para mantener tu cuenta protegida.</div>
+                    </div>
+                    <a href="{% url 'password_change' %}" class="btn btn-soft btn-xs shrink-0">Actualizar</a>
+                </div>
+                <div class="setting-row is-disabled">
+                    <div>
+                        <div class="setting-title">Autenticación en Dos Pasos (2FA) <span class="badge badge-soon">Próximamente</span></div>
+                        <div class="setting-text">Protege tu cuenta con un código temporal al iniciar sesión.</div>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-xs shrink-0" disabled>Activar</button>
+                </div>
+            </div>
+
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-regular fa-bell"></i> Notificaciones y Recordatorios <span class="badge badge-soon">Próximamente</span></h2>
+                <label class="setting-row is-disabled">
+                    <span>
+                        <span class="setting-title">Recordatorios por WhatsApp</span>
+                        <span class="setting-text block">Recibe alertas 24 h antes de tus citas agendadas.</span>
+                    </span>
+                    <input type="checkbox" class="w-4 h-4 accent-indigo-600" disabled>
+                </label>
+                <label class="setting-row is-disabled">
+                    <span>
+                        <span class="setting-title">Notificaciones por Correo Electrónico</span>
+                        <span class="setting-text block">Recibe confirmaciones de reserva en tu correo electrónico.</span>
+                    </span>
+                    <input type="checkbox" class="w-4 h-4 accent-indigo-600" disabled>
+                </label>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'panel_base.html' %}
+{% load static %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <a href="/panel?action=adminpersons" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver a personas</a>
+            <span class="form-note">* Campos obligatorios</span>
+        </div>
+
+        {% if person %}
+            {% include 'panel/partials/profile_header.html' with photo=person.get_photo name=person.full_name subtitle="Editar persona" photo_id='headerPhoto' %}
+        {% else %}
+            {% include 'panel/partials/profile_header.html' with photo='/static/admin/assets/img/no-profile.png' name='Nueva persona' subtitle="Alta de paciente, médico o personal administrativo" photo_id='headerPhoto' %}
+        {% endif %}
+
+        <form id="personForm" class="space-y-6" enctype="multipart/form-data" novalidate>
+            {% if person %}<input type="hidden" name="id" value="{{ person.id }}">{% endif %}
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <!-- 1. Datos personales -->
+                <div class="card card-body card-body-lg">
+                    <h2 class="card-title"><i class="fa-solid fa-user"></i> Datos personales</h2>
+                    {% include 'panel/partials/person_personal_fields.html' with p=person show_photo=True %}
+                </div>
+
+                <!-- 2. Contacto y ubicación -->
+                <div class="card card-body card-body-lg">
+                    <h2 class="card-title"><i class="fa-solid fa-location-dot"></i> Contacto y ubicación</h2>
+                    {% include 'panel/partials/person_contact_fields.html' with p=person compact=True %}
+                </div>
+            </div>
+
+            <!-- 4. Roles -->
+            <div class="card card-body card-body-lg">
+                <h2 class="card-title"><i class="fa-solid fa-id-badge"></i> Roles</h2>
+                <div class="role-cards">
+                    <label class="role-card">
+                        <input type="checkbox" name="roles" value="patient" data-error-keys="citas futuras como paciente"{% if roles.patient %} checked{% endif %}>
+                        <span class="role-card-body">
+                            <span class="role-card-title"><i class="fa-solid fa-user"></i> Paciente <i class="fa-solid fa-circle-check role-card-check"></i></span>
+                            <span class="role-card-text">Puede reservar citas y tiene ficha médica.</span>
+                        </span>
+                    </label>
+                    <label class="role-card">
+                        <input type="checkbox" name="roles" value="doctor" id="roleDoctor" data-error-keys="citas futuras como médico,citas futuras como medico"{% if roles.doctor %} checked{% endif %}>
+                        <span class="role-card-body">
+                            <span class="role-card-title"><i class="fa-solid fa-user-doctor"></i> Médico <i class="fa-solid fa-circle-check role-card-check"></i></span>
+                            <span class="role-card-text">Atiende citas. Requiere cuenta y al menos una especialidad.</span>
+                        </span>
+                    </label>
+                    <label class="role-card">
+                        <input type="checkbox" name="roles" value="admin" id="roleAdmin" data-error-keys="administrativo necesita,cuenta de acceso"{% if roles.admin %} checked{% endif %}>
+                        <span class="role-card-body">
+                            <span class="role-card-title"><i class="fa-solid fa-user-shield"></i> Administrativo <i class="fa-solid fa-circle-check role-card-check"></i></span>
+                            <span class="role-card-text">Gestiona personas y citas. Requiere cuenta.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div id="specialitiesBlock" class="mt-5" hidden>
+                    <span class="form-label">Especialidades del médico <span class="required">*</span></span>
+                    <div class="chip-group">
+                        {% for s in specialities %}
+                            <label class="check-chip">
+                                <input type="checkbox" name="specialities" value="{{ s.id }}" data-error-keys="especialidad"{% if s.id|stringformat:"s" in doctor_speciality_ids %} checked{% endif %}>
+                                <span>{{ s.title }}</span>
+                            </label>
+                        {% empty %}
+                            <p class="form-note">No hay especialidades registradas.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Cuenta de acceso -->
+            <div class="card card-body card-body-lg" id="accountCard">
+                <h2 class="card-title"><i class="fa-solid fa-key"></i> Cuenta de acceso</h2>
+
+                <div id="accountNotice" class="notice notice-warning mb-4" hidden>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Los roles Médico y Administrativo requieren una cuenta de acceso. Se activó la generación del acceso.</span>
+                </div>
+
+                {% if person_user %}
+                    <div class="space-y-4">
+                        <div class="info-row">
+                            <span class="info-label">Usuario:</span>
+                            <span class="info-value font-mono">@{{ person_user.username }}</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="isActive"{% if person_user.is_active %} checked{% endif %}>
+                            <span class="switch-track" aria-hidden="true"></span>
+                            <span>Cuenta activa</span>
+                        </label>
+                        <div>
+                            <label class="switch">
+                                <input type="checkbox" id="resetPassword">
+                                <span class="switch-track" aria-hidden="true"></span>
+                                <span>Restablecer contraseña (se generará una temporal)</span>
+                            </label>
+                        </div>
+                    </div>
+                {% else %}
+                    <label class="switch">
+                        <input type="checkbox" id="createUser">
+                        <span class="switch-track" aria-hidden="true"></span>
+                        <span>Generar acceso al sistema</span>
+                    </label>
+                    <p class="form-note mt-2">Se creará un usuario y una contraseña temporal automáticamente al guardar.</p>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <a href="/panel?action=adminpersons" class="btn btn-outline">Cancelar</a>
+                <button type="submit" id="savePersonBtn" class="btn btn-primary">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                    <span>Guardar persona</span>
+                </button>
+            </div>
+        </form>
+    </section>
+
+    {% include 'panel/partials/credentials_modal.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const HAS_USER = {% if person_user %}true{% else %}false{% endif %};
+            const form = document.getElementById('personForm');
+            const photoInput = document.getElementById('personalPhoto');
+            const roleDoctor = document.getElementById('roleDoctor');
+            const roleAdmin = document.getElementById('roleAdmin');
+            const createUser = document.getElementById('createUser');     // solo sin cuenta
+            const resetPassword = document.getElementById('resetPassword'); // solo con cuenta
+            const isActive = document.getElementById('isActive');           // solo con cuenta
+            const accountNotice = document.getElementById('accountNotice');
+
+            bindPhotoPreview(photoInput, document.getElementById('headerPhoto'));
+            initBirthdateField(document.getElementById('birthdate'), document.getElementById('ageOutput'));
+            bindLocationCascade(form);
+
+            function needsAccount() { return roleDoctor.checked || roleAdmin.checked; }
+            function hasAccess() { return HAS_USER || (createUser && createUser.checked); }
+
+            function syncRoles() {
+                document.getElementById('specialitiesBlock').hidden = !roleDoctor.checked;
+                if (!HAS_USER && needsAccount() && !createUser.checked) {
+                    createUser.checked = true;
+                    accountNotice.hidden = false;
+                }
+                if (!needsAccount()) accountNotice.hidden = true;
+            }
+
+            roleDoctor.addEventListener('change', syncRoles);
+            roleAdmin.addEventListener('change', syncRoles);
+            if (createUser) {
+                createUser.addEventListener('change', function () {
+                    if (!createUser.checked && needsAccount()) {
+                        createUser.checked = true;
+                        accountNotice.hidden = false;
+                        showToast('Médico y Administrativo requieren una cuenta de acceso.', 'error');
+                    }
+                });
+            }
+            syncRoles();
+
+            function goToList(id, msg) {
+                let url = '/panel?action=adminpersons&highlight=' + encodeURIComponent(id || '');
+                if (msg) url += '&info=' + encodeURIComponent(msg);
+                window.location.href = url;
+            }
+
+            bindSectionForm(form, {
+                action: 'adminsaveperson',
+                submit: document.getElementById('savePersonBtn'),
+                validate: function (f) {
+                    const errors = validatePersonalFields(f).concat(validateContactFields(f));
+                    if (roleDoctor.checked && !f.querySelector('input[name="specialities"]:checked')) {
+                        errors.push(['specialities', 'Selecciona al menos una especialidad para el médico.']);
+                    }
+                    if (needsAccount() && !hasAccess()) {
+                        errors.push(['roles', 'Médico y Administrativo requieren una cuenta de acceso.']);
+                    }
+                    return errors;
+                },
+                collect: function (f) {
+                    const data = new FormData(f);
+                    if (!photoInput.files[0]) data.delete('photo');
+                    data.set('create_user', !HAS_USER && createUser.checked ? '1' : '0');
+                    data.set('reset_password', HAS_USER && resetPassword.checked ? '1' : '0');
+                    data.set('is_active', isActive ? (isActive.checked ? '1' : '0') : '1');
+                    if (!roleDoctor.checked) data.delete('specialities');
+                    return data;
+                },
+                onSuccess: function (response) {
+                    const data = response.data || {};
+                    if (data.credentials) {
+                        CredentialsModal.show(data.credentials, {
+                            title: HAS_USER ? 'Contraseña restablecida' : 'Acceso generado',
+                            doneUrl: '/panel?action=adminpersons&highlight=' + encodeURIComponent(data.id || '')
+                        });
+                    } else {
+                        goToList(data.id, response.mensaje || 'Persona guardada correctamente.');
+                    }
+                }
+            });
+        })();
+    </script>
+{% endblock %}

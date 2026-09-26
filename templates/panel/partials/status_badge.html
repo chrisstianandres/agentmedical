@@ -1,0 +1,6 @@
+{% comment %}Badge de estado de una cita. Parámetro: a (Appointment). Las vencidas (cancelled_by='sistema') usan badge-status-vencida.{% endcomment %}
+{% if a.status == 'cancelada' and a.cancelled_by == 'sistema' %}
+    <span class="badge badge-status-vencida"><i class="fa-solid fa-hourglass-end"></i> Vencida</span>
+{% else %}
+    <span class="badge badge-status-{{ a.status }}"><i class="fa-solid fa-circle"></i> {{ a.get_status_display }}</span>
+{% endif %}

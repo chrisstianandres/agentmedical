@@ -1,3 +1,6 @@
 **/migrations/
 .venv/
 .idea/
+/graphify-out/
+/db.sqlite3
+/media/

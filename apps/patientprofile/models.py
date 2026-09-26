@@ -14,6 +14,9 @@ class ProfilePatient(ModeloBase):
     insurance_number = models.CharField(max_length=20, verbose_name="Número de seguro", blank=True, null=True)
     blood_group = models.CharField(max_length=10, verbose_name="Grupo sanguíneo", blank=True, null=True)
     rh_factor = models.CharField(max_length=3, verbose_name="Factor RH", blank=True, null=True)
+    emergency_contact_name = models.CharField(max_length=150, blank=True, default='', verbose_name="Contacto de emergencia")
+    emergency_contact_relationship = models.CharField(max_length=50, blank=True, default='', verbose_name="Parentesco del contacto de emergencia")
+    emergency_contact_phone = models.CharField(max_length=50, blank=True, default='', verbose_name="Teléfono del contacto de emergencia")
 
     def __str__(self):
         return f'Paciente {self.person.full_name()}'

@@ -1,0 +1,108 @@
+{% comment %}
+Campos de contacto y ubicación. Parámetros: p (Person o None), countries, provinces, cantons, parishes,
+compact (oculta teléfono fijo, correo institucional, ciudadela, sector, número y calle secundaria).
+Cascada: bindLocationCascade() en panel.js. Validación: validateContactFields(form).
+{% endcomment %}
+<div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label for="cellphonenumber" class="form-label">Celular</label>
+            <input type="tel" id="cellphonenumber" name="cellphonenumber" maxlength="50" class="form-control" value="{{ p.cellphonenumber|default:'' }}" data-error-keys="celular,móvil">
+        </div>
+        {% if not compact %}
+        <div>
+            <label for="telefonenumber" class="form-label">Teléfono fijo</label>
+            <input type="tel" id="telefonenumber" name="telefonenumber" maxlength="50" class="form-control" value="{{ p.telefonenumber|default:'' }}" data-error-keys="teléfono fijo,telefono fijo">
+        </div>
+        {% endif %}
+        <div>
+            <label for="email" class="form-label">Correo electrónico <span class="required">*</span></label>
+            <input type="email" id="email" name="email" maxlength="200" class="form-control" value="{{ p.email|default:'' }}" data-error-keys="correo electrónico personal,email personal,correo,email" required>
+        </div>
+        {% if not compact %}
+        <div>
+            <label for="emailinst" class="form-label">Correo institucional</label>
+            <input type="email" id="emailinst" name="emailinst" maxlength="200" class="form-control" value="{{ p.emailinst|default:'' }}" data-error-keys="correo institucional,email institucional,institucional">
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label for="country" class="form-label">País</label>
+            <div class="select-wrap">
+                <select id="country" name="country" class="form-control" data-error-keys="país,pais">
+                    <option value="">-- País --</option>
+                    {% for c in countries %}<option value="{{ c.id }}"{% if c.id == p.country_id %} selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="province" class="form-label">Provincia</label>
+            <div class="select-wrap">
+                <select id="province" name="province" class="form-control" data-error-keys="provincia">
+                    <option value="">-- Provincia --</option>
+                    {% for pr in provinces %}<option value="{{ pr.id }}"{% if pr.id == p.province_id %} selected{% endif %}>{{ pr.name }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="canton" class="form-label">Cantón</label>
+            <div class="select-wrap">
+                <select id="canton" name="canton" class="form-control" data-error-keys="cantón,canton">
+                    <option value="">-- Cantón --</option>
+                    {% for ca in cantons %}<option value="{{ ca.id }}"{% if ca.id == p.canton_id %} selected{% endif %}>{{ ca.name }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="parish" class="form-label">Parroquia</label>
+            <div class="select-wrap">
+                <select id="parish" name="parish" class="form-control" data-error-keys="parroquia">
+                    <option value="">-- Parroquia --</option>
+                    {% for pa in parishes %}<option value="{{ pa.id }}"{% if pa.id == p.parish_id %} selected{% endif %}>{{ pa.name }}</option>{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="city" class="form-label">Ciudad</label>
+            <input type="text" id="city" name="city" maxlength="50" class="form-control" value="{{ p.city|default:'' }}" data-error-keys="ciudad ">
+        </div>
+        {% if not compact %}
+        <div>
+            <label for="ciudadela" class="form-label">Ciudadela</label>
+            <input type="text" id="ciudadela" name="ciudadela" maxlength="300" class="form-control" value="{{ p.ciudadela|default:'' }}" data-error-keys="ciudadela">
+        </div>
+        {% endif %}
+        {% if not compact %}
+        <div>
+            <label for="sector" class="form-label">Sector</label>
+            <input type="text" id="sector" name="sector" maxlength="300" class="form-control" value="{{ p.sector|default:'' }}" data-error-keys="sector">
+        </div>
+        {% endif %}
+        {% if not compact %}
+        <div>
+            <label for="numberstreet" class="form-label">Número</label>
+            <input type="text" id="numberstreet" name="numberstreet" maxlength="15" class="form-control" value="{{ p.numberstreet|default:'' }}" data-error-keys="número,numero">
+        </div>
+        {% endif %}
+        <div>
+            <label for="streetaddress" class="form-label">Calle principal</label>
+            <input type="text" id="streetaddress" name="streetaddress" maxlength="300" class="form-control" value="{{ p.streetaddress|default:'' }}" data-error-keys="calle principal">
+        </div>
+        {% if not compact %}
+        <div>
+            <label for="secondarystreetaddress" class="form-label">Calle secundaria</label>
+            <input type="text" id="secondarystreetaddress" name="secondarystreetaddress" maxlength="300" class="form-control" value="{{ p.secondarystreetaddress|default:'' }}" data-error-keys="calle secundaria">
+        </div>
+        {% endif %}
+    </div>
+    <div>
+        <label for="reference" class="form-label">Referencia</label>
+        <input type="text" id="reference" name="reference" maxlength="100" class="form-control" value="{{ p.reference|default:'' }}" data-error-keys="referencia" placeholder="Ej.: Frente al parque central">
+    </div>
+</div>

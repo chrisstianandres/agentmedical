@@ -1,0 +1,21 @@
+{% comment %}
+Selector de perfil activo. Solo se incluye si can_switch.
+Muestra available_profiles (patient/doctor/admin); si no viene, Paciente y Médico.
+Parámetro: variant ('dark' para el sidebar, 'light' para el header).
+{% endcomment %}
+<div class="profile-switch profile-switch-{{ variant|default:'light' }}" role="group" aria-label="Perfil activo">
+    {% if available_profiles %}
+        {% for prof in available_profiles %}
+            <a href="/panel?action=switchprofile&profile={{ prof }}" class="profile-switch-option{% if prof == active_profile %} is-active{% endif %}"{% if prof == active_profile %} aria-current="true"{% endif %}>
+                {% if prof == 'doctor' %}<i class="fa-solid fa-user-doctor"></i> Médico{% elif prof == 'admin' %}<i class="fa-solid fa-user-shield"></i> Administrativo{% else %}<i class="fa-solid fa-user"></i> Paciente{% endif %}
+            </a>
+        {% endfor %}
+    {% else %}
+        <a href="/panel?action=switchprofile&profile=patient" class="profile-switch-option{% if active_profile != 'doctor' %} is-active{% endif %}">
+            <i class="fa-solid fa-user"></i> Paciente
+        </a>
+        <a href="/panel?action=switchprofile&profile=doctor" class="profile-switch-option{% if active_profile == 'doctor' %} is-active{% endif %}">
+            <i class="fa-solid fa-user-doctor"></i> Médico
+        </a>
+    {% endif %}
+</div>

@@ -1,0 +1,184 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Mis turnos de atención</h1>
+                <p class="page-subtitle">Configura los días y horarios en los que los pacientes pueden reservar contigo.</p>
+            </div>
+            <button type="button" id="addScheduleBtn" class="btn btn-primary btn-sm self-start">
+                <i class="fa-solid fa-plus"></i> Agregar horario
+            </button>
+        </div>
+
+        {% include 'panel/partials/empty_state.html' with id='scheduleEmptyAll' icon='fa-calendar-week' title='Aún no tienes horarios de atención' text='Usa «Agregar horario» para definir tus días y rangos de atención. Los pacientes solo podrán reservar en esos turnos.' %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {% for day in schedule_days %}
+                {% include 'panel/partials/schedule_day_card.html' with day=day %}
+            {% endfor %}
+        </div>
+    </section>
+
+    {% include 'panel/partials/schedule_modal.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const form = document.getElementById('scheduleForm');
+            const startInput = document.getElementById('scheduleStart');
+            const endInput = document.getElementById('scheduleEnd');
+            const durationSelect = document.getElementById('scheduleDuration');
+            const durationOther = document.getElementById('scheduleDurationOther');
+            const durationOtherWrap = document.getElementById('scheduleDurationOtherWrap');
+            const preview = document.getElementById('schedulePreview');
+            const alertBox = document.getElementById('scheduleAlert');
+            const submitBtn = document.getElementById('scheduleSubmit');
+            const dayBoxes = form.querySelectorAll('input[name="days"]');
+            let mode = 'add';
+
+            // Estado vacío general solo si no hay ninguna franja
+            document.getElementById('scheduleEmptyAll').hidden = !!document.querySelector('.schedule-item');
+
+            function showAlert(msg) { setHint(alertBox, msg); }
+
+            function getDuration() {
+                return durationSelect.value === 'other' ? Number(durationOther.value) : Number(durationSelect.value);
+            }
+
+            function setDuration(minutes) {
+                const value = String(minutes || 30);
+                const exists = Array.prototype.some.call(durationSelect.options, function (o) { return o.value === value; });
+                durationSelect.value = exists ? value : 'other';
+                durationOther.value = exists ? '' : value;
+                durationOtherWrap.hidden = exists;
+            }
+
+            // Devuelve un mensaje de error o '' si el rango es válido
+            function validateRange() {
+                const start = timeToMinutes(startInput.value);
+                const end = timeToMinutes(endInput.value);
+                const duration = getDuration();
+                if (isNaN(start) || isNaN(end)) return 'Indica la hora de inicio y la hora de fin.';
+                if (start >= end) return 'La hora de inicio debe ser menor que la hora de fin.';
+                if (!(duration >= 5) || duration > 480 || Math.floor(duration) !== duration) return 'Indica una duración válida en minutos (entre 5 y 480).';
+                if (duration > end - start) return 'La duración del turno supera el rango horario.';
+                return '';
+            }
+
+            function updatePreview() {
+                const error = validateRange();
+                preview.classList.toggle('is-invalid', !!error);
+                if (error) {
+                    preview.textContent = error;
+                    return;
+                }
+                const times = buildSlotTimes(startInput.value, endInput.value, getDuration());
+                const shown = times.slice(0, 8).join(', ') + (times.length > 8 ? ', …' : '');
+                preview.innerHTML = 'Se generarán <strong>' + times.length + ' turno' + (times.length === 1 ? '' : 's') +
+                    (mode === 'add' ? ' por día' : '') + '</strong> (' + escapeHtml(shown) + ').';
+            }
+
+            function openSchedule(newMode, data) {
+                mode = newMode;
+                form.reset();
+                showAlert('');
+                const isEdit = mode === 'edit';
+                document.getElementById('scheduleId').value = isEdit ? data.id : '';
+                document.getElementById('scheduleDaysGroup').hidden = isEdit;
+                document.getElementById('scheduleDayFixed').hidden = !isEdit;
+                document.getElementById('scheduleDayLabel').textContent = isEdit ? data.dayLabel : '';
+                document.getElementById('scheduleModalTitle').textContent = isEdit ? 'Editar horario' : 'Agregar horario';
+                document.getElementById('scheduleModalText').textContent = isEdit
+                    ? 'Modifica el rango de atención y la duración de los turnos de esta franja.'
+                    : 'Define los días, el rango de atención y la duración de cada turno.';
+                submitBtn.querySelector('span').textContent = isEdit ? 'Guardar cambios' : 'Guardar horario';
+                startInput.value = isEdit ? data.start : '08:00';
+                endInput.value = isEdit ? data.end : '12:00';
+                setDuration(isEdit ? data.duration : 30);
+                updatePreview();
+                openModal('scheduleModal');
+            }
+
+            // Eventos del formulario
+            [startInput, endInput, durationOther].forEach(function (el) { el.addEventListener('input', updatePreview); });
+            durationSelect.addEventListener('change', function () {
+                durationOtherWrap.hidden = durationSelect.value !== 'other';
+                if (durationSelect.value === 'other') durationOther.focus();
+                updatePreview();
+            });
+            form.querySelectorAll('[data-days]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const which = btn.dataset.days;
+                    dayBoxes.forEach(function (cb) {
+                        cb.checked = which === 'all' || (which === 'weekdays' && cb.dataset.weekday === '1');
+                    });
+                });
+            });
+
+            document.getElementById('addScheduleBtn').addEventListener('click', function () { openSchedule('add'); });
+            document.querySelectorAll('.js-edit-schedule').forEach(function (btn) {
+                btn.addEventListener('click', function () { openSchedule('edit', btn.dataset); });
+            });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                showAlert('');
+                const payload = {
+                    start_time: startInput.value,
+                    end_time: endInput.value,
+                    duration: getDuration()
+                };
+                if (mode === 'add') {
+                    const days = Array.prototype.filter.call(dayBoxes, function (cb) { return cb.checked; })
+                        .map(function (cb) { return cb.value; });
+                    if (!days.length) return showAlert('Selecciona al menos un día.');
+                    payload.action = 'addschedule';
+                    payload.days = days;
+                } else {
+                    payload.action = 'editschedule';
+                    payload.id = document.getElementById('scheduleId').value;
+                }
+                const error = validateRange();
+                if (error) return showAlert(error);
+
+                setButtonLoading(submitBtn, true, 'Guardando...');
+                postAction(payload)
+                    .done(function (response) {
+                        if (response && response.result === 'ok') {
+                            reloadWithInfo(response.mensaje || 'Horario guardado correctamente.');
+                        } else {
+                            showAlert((response && response.mensaje) || 'No se pudo guardar el horario.');
+                            setButtonLoading(submitBtn, false);
+                        }
+                    })
+                    .fail(function () {
+                        showAlert('Error de conexión al guardar el horario.');
+                        setButtonLoading(submitBtn, false);
+                    });
+            });
+
+            // Eliminar franja
+            document.querySelectorAll('.js-delete-schedule').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (!confirm('¿Eliminar el horario ' + btn.dataset.label + '?')) return;
+                    btn.disabled = true;
+                    postAction({action: 'deleteschedule', id: btn.dataset.id})
+                        .done(function (response) {
+                            if (response && response.result === 'ok') {
+                                reloadWithInfo(response.mensaje || 'Horario eliminado correctamente.');
+                            } else {
+                                showToast((response && response.mensaje) || 'No se pudo eliminar el horario.', 'error');
+                                btn.disabled = false;
+                            }
+                        })
+                        .fail(function () {
+                            showToast('Error de conexión al eliminar el horario.', 'error');
+                            btn.disabled = false;
+                        });
+                });
+            });
+        })();
+    </script>
+{% endblock %}

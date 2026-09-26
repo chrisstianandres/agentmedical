@@ -1,0 +1,21 @@
+{% comment %}
+Receta en solo lectura. Parámetros: meds (iterable de medicamentos: name, dose, frequency, duration, route, instructions), title (opcional).
+Si no hay medicamentos no se renderiza nada.
+{% endcomment %}
+{% if meds %}
+    <div>
+        <div class="result-label">{{ title|default:"Receta médica" }}</div>
+        <ul class="med-list">
+            {% for m in meds %}
+                <li class="med-card">
+                    <span class="med-card-icon" aria-hidden="true"><i class="fa-solid fa-pills"></i></span>
+                    <div class="min-w-0">
+                        <div><span class="med-card-title">{{ m.name }}</span>{% if m.dose %} <span class="med-card-dose">· {{ m.dose }}</span>{% endif %}</div>
+                        <div class="med-card-meta">{{ m.frequency }}{% if m.duration %} · {{ m.duration }}{% endif %}{% if m.route %} · Vía {{ m.route|lower }}{% endif %}</div>
+                        {% if m.instructions %}<div class="med-card-notes">{{ m.instructions }}</div>{% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

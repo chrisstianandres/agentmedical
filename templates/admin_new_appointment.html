@@ -1,0 +1,217 @@
+{% extends 'panel_base.html' %}
+{% load static %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Agendar cita</h1>
+                <p class="page-subtitle">Busca al paciente, elige especialidad, médico, fecha y turno.</p>
+            </div>
+            <a href="/panel?action=adminappointments" class="btn btn-outline btn-sm self-start">
+                <i class="fa-solid fa-calendar-check"></i> Gestión de citas
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <form id="adminAppointmentForm" class="lg:col-span-7 space-y-6" novalidate>
+                <!-- Paso 1: paciente -->
+                <div class="card card-body card-body-lg">
+                    <div class="form-section-head">
+                        <div class="flex items-center gap-2">
+                            <span class="step-badge">1</span>
+                            <h2 class="font-semibold text-slate-800 text-base">Paciente</h2>
+                        </div>
+                        <a href="/panel?action=adminpersonform" class="link-action"><i class="fa-solid fa-user-plus"></i> ¿No existe? Crear persona</a>
+                    </div>
+
+                    <input type="hidden" id="patientId" name="patient" value="">
+                    <div class="autocomplete">
+                        <label for="patientSearch" class="form-label">Buscar paciente <span class="required">*</span></label>
+                        <input type="search" id="patientSearch" class="form-control" autocomplete="off" placeholder="Nombre, cédula o HC (mín. 2 caracteres)" aria-autocomplete="list" aria-controls="patientResults">
+                        <div id="patientResults" class="autocomplete-list" role="listbox" hidden></div>
+                    </div>
+                    <div id="selectedPatient" class="selected-patient" hidden>
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="med-card-icon"><i class="fa-solid fa-user"></i></span>
+                            <div id="selectedPatientText" class="min-w-0 text-sm"></div>
+                        </div>
+                        <button type="button" id="changePatient" class="btn btn-outline btn-xs">Cambiar</button>
+                    </div>
+                </div>
+
+                <!-- Paso 2: consulta -->
+                <div class="card card-body card-body-lg space-y-5">
+                    <div class="form-section-head mb-0">
+                        <div class="flex items-center gap-2">
+                            <span class="step-badge">2</span>
+                            <h2 class="font-semibold text-slate-800 text-base">Datos de la consulta</h2>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="specialtySelect" class="form-label">Especialidad <span class="required">*</span></label>
+                            <div class="select-wrap">
+                                <select id="specialtySelect" name="speciality" class="form-control">
+                                    <option value="">-- Seleccionar Especialidad --</option>
+                                    {% for s in specialities %}<option value="{{ s.id }}">{{ s.title }}</option>{% endfor %}
+                                </select>
+                                <i class="fa-solid fa-chevron-down select-icon"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="doctorSelect" class="form-label">Médico <span class="required">*</span></label>
+                            <div class="select-wrap">
+                                <select id="doctorSelect" name="doctor" class="form-control" disabled>
+                                    <option value="">-- Primero elija especialidad --</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down select-icon"></i>
+                            </div>
+                            <p id="doctorHint" class="form-hint">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Selecciona una especialidad para desplegar médicos.</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="appointmentDate" class="form-label">Fecha <span class="required">*</span></label>
+                            <input type="text" id="appointmentDate" class="form-control" disabled placeholder="Selecciona un médico primero" autocomplete="off">
+                            <p id="dateHint" class="form-hint" hidden>
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span></span>
+                            </p>
+                        </div>
+                        <div>
+                            <span class="form-label">Turnos disponibles <span class="required">*</span></span>
+                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar">
+                                <p class="slots-message"><i class="fa-solid fa-circle-info text-[10px]"></i> Selecciona una fecha para ver los turnos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="reason" class="form-label">Motivo <span class="optional">(Opcional)</span></label>
+                        <textarea id="reason" rows="2" maxlength="500" class="form-control" placeholder="Motivo de la consulta o síntomas..."></textarea>
+                    </div>
+
+                    <label class="switch">
+                        <input type="checkbox" id="confirmNow">
+                        <span class="switch-track" aria-hidden="true"></span>
+                        <span>Confirmar la cita inmediatamente</span>
+                    </label>
+
+                    <div class="form-actions">
+                        <button type="button" id="resetBtn" class="btn btn-outline">Limpiar</button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                            <i class="fa-solid fa-calendar-check text-xs"></i>
+                            <span>Agendar cita</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="lg:col-span-5">
+                {% include 'panel/partials/doctor_preview_card.html' %}
+            </div>
+        </div>
+    </section>
+
+    {% include 'panel/partials/booking_success_modal.html' with title='¡Cita agendada!' text='La cita fue registrada correctamente.' primary_url='/panel?action=adminappointments&tab=upcoming' primary_label='Ver en gestión de citas' secondary_label='Agendar otra' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const submitBtn = document.getElementById('submitBtn');
+            const reason = document.getElementById('reason');
+            const confirmNow = document.getElementById('confirmNow');
+
+            let patients = null, booking = null;
+            function refresh() { submitBtn.disabled = !(patients && booking && patients.value() && booking.ready()); }
+
+            patients = PatientSearch.create({
+                input: document.getElementById('patientSearch'),
+                list: document.getElementById('patientResults'),
+                hidden: document.getElementById('patientId'),
+                selectedBox: document.getElementById('selectedPatient'),
+                selectedText: document.getElementById('selectedPatientText'),
+                changeBtn: document.getElementById('changePatient'),
+                preset: {% if preset_patient %}{id: '{{ preset_patient.id|escapejs }}', text: '{{ preset_patient.text|escapejs }}', document: '{{ preset_patient.document|default_if_none:''|escapejs }}', hc: '{{ preset_patient.hc|default_if_none:''|escapejs }}'}{% else %}null{% endif %},
+                onChange: function () { refresh(); }
+            });
+
+            booking = DoctorPicker.create({
+                specSelect: document.getElementById('specialtySelect'),
+                docSelect: document.getElementById('doctorSelect'),
+                docHint: document.getElementById('doctorHint'),
+                dateInput: document.getElementById('appointmentDate'),
+                slotsBox: document.getElementById('timeSlotsContainer'),
+                dateHint: document.getElementById('dateHint'),
+                noPhoto: '{% static 'admin/assets/img/no-profile.png' %}',
+                onChange: refresh
+            });
+
+            function resetForm(keepPatient) {
+                reason.value = '';
+                confirmNow.checked = false;
+                booking.reset();
+                if (!keepPatient) patients.clear();
+                refresh();
+            }
+
+            document.getElementById('resetBtn').addEventListener('click', function () { resetForm(false); });
+
+            function renderSummary(data) {
+                const rows = [
+                    ['Paciente:', data.patient, 'info-value-strong'],
+                    ['Médico:', data.doctor, 'info-value-strong'],
+                    ['Fecha y Turno:', [data.date, data.time].filter(Boolean).join(' · '), 'info-value-strong'],
+                    ['Estado:', confirmNow.checked ? 'Confirmada' : 'Pendiente de confirmar', 'text-accent']
+                ];
+                document.getElementById('modalSummary').innerHTML = rows.map(function (r) {
+                    return '<div class="info-row"><span class="info-label">' + r[0] + '</span>' +
+                        '<span class="info-value ' + r[2] + '">' + escapeHtml(r[1] || '--') + '</span></div>';
+                }).join('');
+            }
+
+            document.getElementById('successSecondary').addEventListener('click', function () {
+                closeModal('successModal');
+                resetForm(true);   // otra cita para el mismo paciente
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            });
+
+            document.getElementById('adminAppointmentForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!patients.value()) {
+                    showToast('Selecciona un paciente.', 'error');
+                    document.getElementById('patientSearch').focus();
+                    return;
+                }
+                if (!booking.ready()) return;
+                setButtonLoading(submitBtn, true, 'Agendando...');
+                postAction(Object.assign({
+                    action: 'adminaddappointment',
+                    patient: patients.value(),
+                    reason: reason.value,
+                    confirm: confirmNow.checked ? '1' : '0'
+                }, booking.values()))
+                    .done(function (response) {
+                        if (response && response.result === 'ok') {
+                            renderSummary(response.data || {});
+                            openModal('successModal');
+                        } else {
+                            showToast((response && response.mensaje) || 'No se pudo agendar la cita.', 'error');
+                            booking.reloadSlots();
+                        }
+                    })
+                    .fail(function () { showToast('Error de conexión al agendar la cita.', 'error'); })
+                    .always(function () {
+                        setButtonLoading(submitBtn, false);
+                        refresh();
+                    });
+            });
+        })();
+    </script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% if title %}{{ title }} · {% endif %}CenterMedical - Portal</title>
+    <!-- Tailwind CSS CDN + configuración de marca -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'panel/js/tailwind.config.js' %}"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Flatpickr (selector de fechas) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Estilos compartidos del panel -->
+    <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}">
+</head>
+<body class="h-full text-slate-800 font-sans antialiased bg-slate-100 flex overflow-hidden {% if active_profile == 'doctor' %}profile-doctor{% elif active_profile == 'admin' %}profile-admin{% else %}profile-patient{% endif %} {% block body_class %}{% endblock %}">
+
+    <!-- Overlay del sidebar en móvil -->
+    <div id="sidebarOverlay" class="sidebar-overlay lg:hidden" hidden></div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="sidebar">
+        <div>
+            <div class="sidebar-brand">
+                <a href="{% if active_profile == 'doctor' %}/panel?action=doctorappointments{% elif active_profile == 'admin' %}/panel?action=adminappointments{% else %}/panel?action=appointment{% endif %}" class="flex items-center gap-3">
+                    <span class="sidebar-logo"><i class="fa-solid {% if active_profile == 'doctor' %}fa-user-doctor{% elif active_profile == 'admin' %}fa-user-shield{% else %}fa-user{% endif %} text-lg"></i></span>
+                    <span>
+                        <span class="font-bold text-white text-base tracking-tight block leading-none">CenterMedical</span>
+                        <span class="sidebar-portal">{% if active_profile == 'doctor' %}Portal Médico{% elif active_profile == 'admin' %}Portal Administrativo{% else %}Portal Pacientes{% endif %}</span>
+                    </span>
+                </a>
+                <button type="button" id="closeSidebar" class="lg:hidden text-slate-400 hover:text-white p-1" aria-label="Cerrar menú">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            {% if can_switch %}
+                <div class="px-4 pt-4">
+                    {% include 'panel/partials/profile_switch.html' with variant='dark' %}
+                </div>
+            {% endif %}
+
+            <nav class="p-4 space-y-1">
+                <div class="sidebar-section">Menú Principal</div>
+
+                {% if active_profile == 'doctor' %}
+                    <a href="/panel?action=doctorappointments" class="nav-item{% if action == 'doctorappointments' or action == 'doctorappointmentdetail' %} is-active{% endif %}">
+                        <i class="fa-solid fa-hospital-user"></i>
+                        <span>Citas de mis pacientes</span>
+                        {% if counts_doctor_today %}<span class="nav-badge" title="Citas de hoy">{{ counts_doctor_today }}</span>{% endif %}
+                    </a>
+
+                    <a href="/panel?action=doctorschedule" class="nav-item{% if action == 'doctorschedule' %} is-active{% endif %}">
+                        <i class="fa-solid fa-calendar-week"></i>
+                        <span>Mis turnos</span>
+                    </a>
+
+                    <div class="sidebar-section pt-6">Mi Cuenta</div>
+
+                    <a href="/panel?action=doctorprofile" class="nav-item{% if action == 'doctorprofile' %} is-active{% endif %}">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <span>Mi perfil médico</span>
+                    </a>
+                {% elif active_profile == 'admin' %}
+                    <a href="/panel?action=adminappointments" class="nav-item{% if action == 'adminappointments' %} is-active{% endif %}">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Gestión de citas</span>
+                        {% if counts.today %}<span class="nav-badge" title="Citas de hoy">{{ counts.today }}</span>{% endif %}
+                    </a>
+
+                    <a href="/panel?action=adminnewappointment" class="nav-item{% if action == 'adminnewappointment' %} is-active{% endif %}">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Agendar cita</span>
+                    </a>
+
+                    <div class="sidebar-section pt-6">Personas</div>
+
+                    <a href="/panel?action=adminpersons" class="nav-item{% if action == 'adminpersons' or action == 'adminpersonform' and request.GET.id %} is-active{% endif %}">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Personas</span>
+                    </a>
+
+                    <a href="/panel?action=adminpersonform" class="nav-item{% if action == 'adminpersonform' and not request.GET.id %} is-active{% endif %}">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Nueva persona</span>
+                    </a>
+
+                    <div class="sidebar-section pt-6">Mi Cuenta</div>
+                {% else %}
+                    <a href="/panel?action=appointment" class="nav-item{% if action == 'appointment' %} is-active{% endif %}">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Reservar Cita</span>
+                    </a>
+
+                    <a href="/panel?action=myappointments" class="nav-item{% if action == 'myappointments' %} is-active{% endif %}">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Mis Citas</span>
+                        {% if counts_upcoming %}<span class="nav-badge">{{ counts_upcoming }}</span>{% endif %}
+                    </a>
+
+                    <a href="/panel?action=directory" class="nav-item{% if action == 'directory' %} is-active{% endif %}">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <span>Directorio Médico</span>
+                    </a>
+
+                    <div class="nav-item is-disabled" aria-disabled="true" title="Próximamente">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Facturación</span>
+                        <span class="nav-soon">Próximamente</span>
+                    </div>
+
+                    <div class="sidebar-section pt-6">Mi Cuenta</div>
+
+                    <a href="/panel?action=profile" class="nav-item{% if action == 'profile' %} is-active{% endif %}">
+                        <i class="fa-solid fa-id-card"></i>
+                        <span>Mi perfil</span>
+                    </a>
+                {% endif %}
+
+                <a href="/panel?action=settings" class="nav-item{% if action == 'settings' %} is-active{% endif %}">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="nav-logout">
+                <span class="flex items-center gap-2 font-medium">
+                    <i class="fa-solid fa-power-off"></i>
+                    Cerrar Sesión
+                </span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <header class="topbar">
+            <div class="flex items-center gap-4 min-w-0">
+                <button type="button" id="toggleSidebar" class="icon-btn" aria-label="Mostrar u ocultar menú">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+
+                <nav class="hidden sm:flex items-center text-xs text-slate-500 gap-2 min-w-0" aria-label="Ruta">
+                    <a href="{% if active_profile == 'doctor' %}/panel?action=doctorappointments{% elif active_profile == 'admin' %}/panel?action=adminappointments{% else %}/panel?action=appointment{% endif %}" class="hover:text-slate-800">Inicio</a>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                    <span>{% if active_profile == 'doctor' %}Médicos{% elif active_profile == 'admin' %}Administración{% else %}Pacientes{% endif %}</span>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                    <span class="crumb-current truncate">{{ title }}</span>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <form method="get" action="/panel" class="relative hidden md:block w-60" role="search">
+                    {% if active_profile == 'doctor' %}
+                        <input type="hidden" name="action" value="doctorappointments">
+                        {% if action == 'doctorappointments' and tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
+                    {% elif active_profile == 'admin' %}
+                        <input type="hidden" name="action" value="adminpersons">
+                    {% else %}
+                        <input type="hidden" name="action" value="directory">
+                    {% endif %}
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    {% if active_profile == 'doctor' %}
+                        <input type="search" name="q" value="{% if action == 'doctorappointments' %}{{ q|default:'' }}{% endif %}" placeholder="Buscar paciente o cédula..." aria-label="Buscar paciente" class="topbar-search">
+                    {% elif active_profile == 'admin' %}
+                        <input type="search" name="q" value="{% if action == 'adminpersons' %}{{ q|default:'' }}{% endif %}" placeholder="Buscar persona o cédula..." aria-label="Buscar persona" class="topbar-search">
+                    {% else %}
+                        <input type="search" name="q" value="{% if action == 'directory' %}{{ q|default:'' }}{% endif %}" placeholder="Buscar especialista..." aria-label="Buscar especialista" class="topbar-search">
+                    {% endif %}
+                </form>
+
+                {% if can_switch %}
+                    <div class="hidden lg:block">
+                        {% include 'panel/partials/profile_switch.html' with variant='light' %}
+                    </div>
+                {% endif %}
+
+                <a href="{% if active_profile == 'doctor' %}/panel?action=doctorprofile{% elif active_profile == 'admin' %}/panel?action=settings{% else %}/panel?action=profile{% endif %}" class="user-widget" title="{% firstof header_name person.full_name %} · {{ header_role|default:'Paciente' }}">
+                    <span class="avatar-badge-wrap">
+                        <img src="{% firstof header_photo person.get_photo %}" alt="{% firstof header_name person.full_name %}" class="avatar avatar-top">
+                        {% if active_profile == 'doctor' %}<span class="avatar-badge" aria-hidden="true"><i class="fa-solid fa-stethoscope"></i></span>{% elif active_profile == 'admin' %}<span class="avatar-badge" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>{% endif %}
+                    </span>
+                    <span class="user-widget-text">
+                        <span class="user-widget-name">{% firstof header_name person.full_name %}</span>
+                        <span class="user-widget-meta">
+                            <span class="role-chip"><i class="fa-solid {% if active_profile == 'doctor' %}fa-user-doctor{% elif active_profile == 'admin' %}fa-user-shield{% else %}fa-user{% endif %}"></i>{{ header_role|default:'Paciente' }}</span>
+                            {% if header_detail %}<span class="user-widget-detail hidden sm:inline">{{ header_detail }}</span>{% endif %}
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastNotification" class="toast" role="status" aria-live="polite">
+        <i id="toastIcon" class="toast-icon fa-solid fa-circle-check"></i>
+        <span id="toastMsg">Notificación</span>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="{% static 'panel/js/panel.js' %}"></script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

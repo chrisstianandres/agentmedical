@@ -1,0 +1,65 @@
+{% comment %}
+Campos de datos personales (perfil del paciente y administración de personas).
+Parámetros: p (Person o None), typedocument_choices, sex_choices,
+show_photo (campo de foto, id personalPhoto), show_hc y hc (historia clínica, solo lectura).
+Validación compartida: validatePersonalFields(form) e initBirthdateField() en panel.js.
+{% endcomment %}
+<div class="space-y-4">
+    {% if show_photo %}
+    <div>
+        <span class="form-label">Fotografía <span class="optional">(JPG, PNG o WEBP, máx. 5 MB)</span></span>
+        <input type="file" id="personalPhoto" name="photo" class="form-control" accept="image/jpeg,image/png,image/webp" aria-label="Fotografía">
+    </div>
+    {% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label for="names" class="form-label">Nombres <span class="required">*</span></label>
+            <input type="text" id="names" name="names" maxlength="100" class="form-control" value="{{ p.names }}" data-error-keys="nombre" required>
+        </div>
+        <div>
+            <label for="lastnames" class="form-label">Apellidos <span class="required">*</span></label>
+            <input type="text" id="lastnames" name="lastnames" maxlength="50" class="form-control" value="{{ p.lastnames }}" data-error-keys="apellido" required>
+        </div>
+        <div>
+            <label for="typedocument" class="form-label">Tipo de documento</label>
+            <div class="select-wrap">
+                <select id="typedocument" name="typedocument" class="form-control" data-error-keys="tipo de documento">
+                    {% for code, label in typedocument_choices %}{% if code != 4 or code == p.typedocument %}
+                        <option value="{{ code }}"{% if code == p.typedocument %} selected{% endif %}{% if label|upper == 'CEDULA' or label|upper == 'CÉDULA' %} data-cedula="1"{% endif %}>{% if label|upper == 'CEDULA' or label|upper == 'CÉDULA' %}Cédula{% elif label|upper == 'RUC' %}RUC{% else %}{{ label|title }}{% endif %}</option>
+                    {% endif %}{% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="document" class="form-label">Documento <span class="required">*</span></label>
+            <input type="text" id="document" name="document" maxlength="20" class="form-control" value="{{ p.document }}" inputmode="numeric" data-error-keys="documento,cédula,cedula" required>
+        </div>
+        <div>
+            <label for="birthdate" class="form-label">Fecha de nacimiento <span class="required">*</span></label>
+            <input type="text" id="birthdate" name="birthdate" class="form-control" value="{{ p.birthdate|date:'Y-m-d' }}" autocomplete="off" data-error-keys="nacimiento" required>
+            <span id="ageOutput" class="computed is-muted"></span>
+        </div>
+        <div>
+            <label for="sexo" class="form-label">Sexo</label>
+            <div class="select-wrap">
+                <select id="sexo" name="sexo" class="form-control" data-error-keys="sexo">
+                    {% for code, label in sex_choices %}
+                        <option value="{{ code }}"{% if code == p.sexo %} selected{% endif %}>{{ label|title }}</option>
+                    {% endfor %}
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div>
+            <label for="nacionality" class="form-label">Nacionalidad</label>
+            <input type="text" id="nacionality" name="nacionality" maxlength="100" class="form-control" value="{{ p.nacionality|default:'' }}" data-error-keys="nacionalidad" placeholder="Ej.: Ecuatoriana">
+        </div>
+        {% if show_hc %}
+        <div>
+            <label for="hcNumber" class="form-label">Historia clínica</label>
+            <input type="text" id="hcNumber" class="form-control" value="{{ hc|default:'--' }}" disabled>
+        </div>
+        {% endif %}
+    </div>
+</div>

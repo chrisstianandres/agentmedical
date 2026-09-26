@@ -1,0 +1,64 @@
+{% load static %}
+{% comment %}Columna derecha de Reservar Cita: estado vacío, cargando y tarjeta del médico (rellenada por JS).{% endcomment %}
+
+<!-- Estado vacío -->
+<div id="emptyStateCard" class="empty-state empty-state-tall">
+    <div class="empty-state-icon"><i class="fa-solid fa-user-doctor"></i></div>
+    <h3 class="empty-state-title">Sin Médico Seleccionado</h3>
+    <p class="empty-state-text">
+        Por favor elige una <strong class="text-slate-700">Especialidad</strong> y un <strong class="text-slate-700">Médico</strong> en el formulario para previsualizar la información del especialista, ubicación y arancel.
+    </p>
+    <div class="checklist-box">
+        <div class="checklist-title">¿Qué verás aquí?</div>
+        <div class="checklist-item"><i class="fa-solid fa-circle-check"></i> Fotografía y perfil profesional</div>
+        <div class="checklist-item"><i class="fa-solid fa-circle-check"></i> Años de experiencia y trayectoria</div>
+        <div class="checklist-item"><i class="fa-solid fa-circle-check"></i> Ubicación de consultorio y costo</div>
+    </div>
+</div>
+
+<!-- Cargando -->
+<div id="loadingCard" class="card empty-state-tall flex flex-col items-center justify-center text-slate-400" hidden>
+    <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+    <p class="text-xs mt-3">Cargando información del médico...</p>
+</div>
+
+<!-- Tarjeta del médico -->
+<div id="doctorCard" class="card overflow-hidden animate-fade-in" hidden>
+    <div class="doctor-hero">
+        <span class="pill-glass"><span class="pulse-dot"></span> Disponible</span>
+    </div>
+
+    <div class="px-6 pb-6 text-center -mt-14 relative z-10">
+        <img id="docPhoto" src="{% static 'admin/assets/img/no-profile.png' %}" alt="Médico" class="avatar avatar-xl mx-auto mb-3">
+
+        <h3 id="docName" class="text-lg font-bold text-slate-900 leading-snug">--</h3>
+        <p id="docSpecialty" class="text-accent mt-0.5">--</p>
+        <p id="docLocation" class="meta-list justify-center">
+            <span><i class="fa-solid fa-location-dot meta-location"></i><span data-field>--</span></span>
+        </p>
+
+        <div class="stat-grid">
+            <div>
+                <div id="docExp" class="stat-value">--</div>
+                <div class="stat-label">Experiencia</div>
+            </div>
+            <div>
+                <div id="docPatients" class="stat-value">--</div>
+                <div class="stat-label">Pacientes</div>
+            </div>
+        </div>
+
+        <div class="info-box info-list">
+            <div class="info-row">
+                <span class="info-label">Consultorio:</span>
+                <span id="docRoom" class="info-value info-value-strong">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Costo Consulta:</span>
+                <span id="docPrice" class="info-value text-price text-sm">--</span>
+            </div>
+        </div>
+
+        <p id="docBio" class="mt-4 text-left text-xs text-slate-500 line-clamp-3 leading-relaxed">--</p>
+    </div>
+</div>

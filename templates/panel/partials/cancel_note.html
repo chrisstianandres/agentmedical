@@ -1,0 +1,12 @@
+{% comment %}Quién canceló la cita y por qué. Parámetro: a (Appointment con status 'cancelada').{% endcomment %}
+{% if a.cancelled_by == 'sistema' %}
+    <p class="cancel-note cancel-note-system"><i class="fa-solid fa-hourglass-end"></i> Cancelada automáticamente: vencida sin atención.</p>
+{% elif a.cancelled_by == 'medico' %}
+    <p class="cancel-note"><i class="fa-solid fa-user-doctor"></i> Cancelada por el médico{% if a.cancel_reason %}: {{ a.cancel_reason }}{% endif %}</p>
+{% elif a.cancelled_by == 'administrativo' %}
+    <p class="cancel-note"><i class="fa-solid fa-user-shield"></i> Cancelada por administración{% if a.cancel_reason %}: {{ a.cancel_reason }}{% endif %}</p>
+{% elif a.cancelled_by == 'paciente' %}
+    <p class="cancel-note"><i class="fa-solid fa-user"></i> Cancelada por el paciente{% if a.cancel_reason %}: {{ a.cancel_reason }}{% endif %}</p>
+{% elif a.cancel_reason %}
+    <p class="cancel-note"><i class="fa-solid fa-ban"></i> Motivo: {{ a.cancel_reason }}</p>
+{% endif %}

@@ -1,0 +1,23 @@
+{% comment %}
+Cabecera del paciente en la atención médica.
+Parámetros: p (Person del paciente), patient (ProfilePatient o None), alergies (PatientAlergy con .alergy.name).
+{% endcomment %}
+<div class="card">
+    <div class="profile-cover"></div>
+    <div class="px-6 pb-6 relative flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-12">
+        <img src="{{ p.get_photo }}" alt="{{ p.full_name }}" class="avatar avatar-xl">
+        <div class="text-center sm:text-left min-w-0 mt-12">
+            <span class="patient-tag"><i class="fa-solid fa-user"></i> Paciente</span>
+            <h1 class="text-xl font-extrabold text-slate-900">{{ p.full_name }}</h1>
+            <div class="clinical-chips justify-center sm:justify-start">
+                {% if p.age or p.age == 0 %}<span class="chip"><i class="fa-solid fa-cake-candles"></i>{{ p.age }} año{{ p.age|pluralize }}</span>{% endif %}
+                {% if p.document %}<span class="chip"><i class="fa-solid fa-id-card"></i>C.I. {{ p.document }}</span>{% endif %}
+                {% if patient.medical_record_number %}<span class="chip"><i class="fa-solid fa-folder-open" title="Historia clínica"></i>{{ patient.medical_record_number }}</span>{% endif %}
+                {% if patient.blood_group %}<span class="chip chip-blood"><i class="fa-solid fa-droplet"></i>{{ patient.blood_group }}{{ patient.rh_factor|default:"" }}</span>{% endif %}
+                {% for pa in alergies %}
+                    <span class="chip chip-allergy"><i class="fa-solid fa-triangle-exclamation"></i>Alergia: {{ pa.alergy.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

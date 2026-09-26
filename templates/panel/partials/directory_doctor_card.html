@@ -1,0 +1,25 @@
+{% comment %}Tarjeta de médico del Directorio. Parámetro: d (ProfileMedical).{% endcomment %}
+{% with specs=d.specialtyprofile_set.all %}
+<article class="card card-body card-hover flex flex-col justify-between">
+    <div>
+        <div class="flex items-start gap-3">
+            <img src="{{ d.person.get_photo }}" alt="{{ d.person.full_name }}" class="avatar-square avatar-lg">
+            <div class="min-w-0">
+                <h3 class="font-bold text-slate-900 text-sm">{{ d.person.full_name }}</h3>
+                <p class="text-accent mt-0.5">
+                    {% for sp in specs %}{{ sp.specialty.title }}{% if not forloop.last %} · {% endif %}{% empty %}Medicina General{% endfor %}
+                </p>
+            </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 line-clamp-2">{{ d.aboutme|default:"Sin descripción disponible." }}</p>
+        <div class="info-list mt-3 pt-3 border-t border-slate-100">
+            <div class="info-row"><span class="info-label">Ubicación:</span><span class="info-value">{{ d.person.full_residence_country|default:"No disponible" }}</span></div>
+            <div class="info-row"><span class="info-label">Experiencia:</span><span class="info-value">{% if d.years_experience or d.years_experience == 0 %}{{ d.years_experience }} Año{{ d.years_experience|pluralize }}{% else %}--{% endif %}</span></div>
+            <div class="info-row"><span class="info-label">Consulta:</span><span class="info-value text-price">{% if d.consultation_price %}${{ d.consultation_price }} USD{% else %}--{% endif %}</span></div>
+        </div>
+    </div>
+    <a href="/panel?action=appointment&doctor={{ d.id }}{% if specs %}&speciality={{ specs.0.specialty.id }}{% endif %}" class="btn btn-primary btn-sm btn-block mt-4">
+        <i class="fa-solid fa-calendar-check"></i> Reservar Cita
+    </a>
+</article>
+{% endwith %}

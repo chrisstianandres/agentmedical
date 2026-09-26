@@ -1,0 +1,61 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Citas de mis pacientes</h1>
+                <p class="page-subtitle">Confirma, atiende y registra el resultado de las consultas agendadas contigo.</p>
+            </div>
+            <a href="/panel?action=doctorschedule" class="btn btn-outline btn-sm self-start">
+                <i class="fa-solid fa-calendar-week"></i> Mis turnos
+            </a>
+        </div>
+
+        <nav class="tabs" aria-label="Filtro de citas">
+            <a href="/panel?action=doctorappointments&tab=today" class="tab{% if tab == 'today' %} is-active{% endif %}">Hoy ({{ counts.today|default:0 }})</a>
+            <a href="/panel?action=doctorappointments&tab=upcoming" class="tab{% if tab == 'upcoming' %} is-active{% endif %}">Próximas ({{ counts.upcoming|default:0 }})</a>
+            <a href="/panel?action=doctorappointments&tab=history" class="tab{% if tab == 'history' %} is-active{% endif %}">Historial ({{ counts.history|default:0 }})</a>
+            <a href="/panel?action=doctorappointments&tab=cancelled" class="tab{% if tab == 'cancelled' %} is-active{% endif %}">Canceladas ({{ counts.cancelled|default:0 }})</a>
+        </nav>
+
+        <form method="get" action="/panel" class="card filter-bar" role="search">
+            <input type="hidden" name="action" value="doctorappointments">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Paciente o cédula..." aria-label="Buscar paciente o cédula" class="form-control form-control-sm">
+            <input type="text" id="dateFilter" name="date" value="{{ date|default:'' }}" placeholder="Fecha" aria-label="Filtrar por fecha" class="form-control form-control-sm" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+            {% if q or date %}
+                <a href="/panel?action=doctorappointments&tab={{ tab }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Limpiar</a>
+            {% endif %}
+        </form>
+
+        <div class="space-y-4">
+            {% for a in appointments %}
+                {% include 'panel/partials/appointment_card.html' with a=a mode='doctor' %}
+            {% empty %}
+                {% if q or date %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-magnifying-glass' title='Sin resultados' text='No hay citas que coincidan con los filtros aplicados.' %}
+                {% elif tab == 'today' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-mug-hot' title='No tienes citas para hoy' text='Las citas que tus pacientes reserven para hoy aparecerán aquí.' %}
+                {% elif tab == 'upcoming' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-plus' title='No tienes citas próximas' text='Revisa tus turnos de atención para que los pacientes puedan reservar.' cta_url='/panel?action=doctorschedule' cta_label='Ver mis turnos' cta_icon='fa-calendar-week' %}
+                {% elif tab == 'history' %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-clock-rotate-left' title='Sin historial de consultas' text='Aquí aparecerán las citas ya atendidas.' %}
+                {% else %}
+                    {% include 'panel/partials/empty_state.html' with icon='fa-calendar-xmark' title='Sin citas canceladas' text='No hay citas canceladas.' %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+
+    {% include 'panel/partials/cancel_modal.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        initDateFilter(document.getElementById('dateFilter'));
+        bindConfirmButtons();
+        bindCancelButtons();
+        {% if tab == 'today' %}highlightNextAppointment();{% endif %}
+    </script>
+{% endblock %}

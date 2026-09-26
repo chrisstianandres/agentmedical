@@ -1,0 +1,31 @@
+{% comment %}Modal para reagendar una cita (fecha + turno). Lo controla my_appointments.html con SlotPicker.{% endcomment %}
+<div id="rescheduleModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="rescheduleTitle">
+    <div class="modal-panel">
+        <button type="button" class="modal-close" data-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <h3 id="rescheduleTitle" class="modal-title">Reagendar Cita</h3>
+        <p class="modal-text">Con <strong id="rescheduleDoctor" class="text-slate-700">--</strong> · Actual: <span id="rescheduleCurrent">--</span></p>
+
+        <form id="rescheduleForm" class="space-y-4 mt-5" novalidate>
+            <input type="hidden" id="rescheduleId" name="id" value="">
+            <div>
+                <label for="rescheduleDate" class="form-label">Nueva Fecha <span class="required">*</span></label>
+                <input type="text" id="rescheduleDate" name="date" class="form-control" disabled placeholder="Cargando fechas..." autocomplete="off">
+                <p id="rescheduleDateHint" class="form-hint" hidden>
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span></span>
+                </p>
+            </div>
+            <div>
+                <span class="form-label">Nuevo Turno <span class="required">*</span></span>
+                <div id="rescheduleSlots" class="slots-grid custom-scrollbar"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" data-modal-close>Cancelar</button>
+                <button type="submit" id="rescheduleSubmit" class="btn btn-primary" disabled>
+                    <i class="fa-solid fa-calendar-check text-xs"></i>
+                    <span>Confirmar Cambio</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

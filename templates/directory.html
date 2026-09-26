@@ -1,0 +1,40 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Directorio Médico Especializado</h1>
+                <p class="page-subtitle">Encuentra y agenda directamente con el profesional médico que requieras.</p>
+            </div>
+
+            <form method="get" action="/panel" class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto" role="search">
+                <input type="hidden" name="action" value="directory">
+                <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar por nombre o especialidad..." aria-label="Buscar médico" class="form-control form-control-sm sm:w-64">
+                <div class="select-wrap">
+                    <select name="speciality" aria-label="Especialidad" class="form-control form-control-sm" onchange="this.form.submit()">
+                        <option value="">Todas las Especialidades</option>
+                        {% for s in specialities %}
+                            <option value="{{ s.id }}"{% if s.id|stringformat:"s" == speciality %} selected{% endif %}>{{ s.title }}</option>
+                        {% endfor %}
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            </form>
+        </div>
+
+        {% if doctors %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for d in doctors %}
+                    {% include 'panel/partials/directory_doctor_card.html' with d=d %}
+                {% endfor %}
+            </div>
+        {% else %}
+            {% if q or speciality %}
+                {% include 'panel/partials/empty_state.html' with icon='fa-user-doctor' title='No se encontraron médicos' text='Prueba con otro nombre o especialidad.' cta_url='/panel?action=directory' cta_label='Ver todos los médicos' cta_icon='fa-rotate-left' %}
+            {% else %}
+                {% include 'panel/partials/empty_state.html' with icon='fa-user-doctor' title='Aún no hay médicos registrados' text='Vuelve a consultar el directorio más adelante.' %}
+            {% endif %}
+        {% endif %}
+    </section>
+{% endblock %}

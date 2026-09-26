@@ -1,0 +1,52 @@
+{% comment %}
+Tarjeta de un día de la semana con sus franjas de atención.
+Parámetro: day ({code, label, items:[{id, start_time, end_time, duration_minutes, slots_count, has_future_appointments}]}).
+{% endcomment %}
+<article class="card day-card">
+    <header class="day-card-head">
+        <h3 class="day-card-title">{{ day.label }}</h3>
+        {% if day.items %}
+            <span class="badge badge-info">{{ day.items|length }} franja{{ day.items|length|pluralize }}</span>
+        {% else %}
+            <span class="badge">Sin atención</span>
+        {% endif %}
+    </header>
+    <div class="day-card-body">
+        {% for item in day.items %}
+            <div class="schedule-item">
+                <div class="min-w-0">
+                    <div class="schedule-range">{{ item.start_time }} – {{ item.end_time }}</div>
+                    <div class="schedule-meta">cada {{ item.duration_minutes }} min · {{ item.slots_count }} turno{{ item.slots_count|pluralize }}</div>
+                </div>
+                <div class="schedule-actions">
+                    <button type="button" class="icon-action js-edit-schedule" title="Editar horario" aria-label="Editar horario {{ item.start_time }} – {{ item.end_time }}"
+                            data-id="{{ item.id }}"
+                            data-day-label="{{ day.label }}"
+                            data-start="{{ item.start_time }}"
+                            data-end="{{ item.end_time }}"
+                            data-duration="{{ item.duration_minutes }}">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    {% if item.has_future_appointments %}
+                        <span title="No se puede eliminar: tiene citas futuras agendadas">
+                            <button type="button" class="icon-action icon-action-danger" disabled aria-label="No se puede eliminar: tiene citas futuras agendadas">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </span>
+                    {% else %}
+                        <button type="button" class="icon-action icon-action-danger js-delete-schedule" title="Eliminar horario" aria-label="Eliminar horario {{ item.start_time }} – {{ item.end_time }}"
+                                data-id="{{ item.id }}"
+                                data-label="{{ day.label }} {{ item.start_time }} – {{ item.end_time }}">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="day-card-empty">
+                <i class="fa-regular fa-calendar-xmark text-base"></i>
+                Sin horarios este día
+            </div>
+        {% endfor %}
+    </div>
+</article>

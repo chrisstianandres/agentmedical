@@ -1,0 +1,87 @@
+{% extends 'panel_base.html' %}
+{% block body %}
+    <section class="space-y-6 animate-fade-in">
+        {% if patient.medical_record_number %}
+            {% include 'panel/partials/profile_header.html' with photo=person.get_photo name=person.full_name subtitle="Paciente · "|add:patient.medical_record_number location=person.full_residence_country edit_url='/panel?action=profileedit' %}
+        {% else %}
+            {% include 'panel/partials/profile_header.html' with photo=person.get_photo name=person.full_name subtitle="Paciente" location=person.full_residence_country edit_url='/panel?action=profileedit' %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-user"></i> Información Personal</h2>
+                <div class="info-list">
+                    <div class="info-row"><span class="info-label">Cédula / Identificación:</span><span class="info-value">{{ person.document|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Fecha de Nacimiento:</span><span class="info-value">{% if person.birthdate %}{{ person.birthdate|date:"d/m/Y" }}{% if person.age or person.age == 0 %} ({{ person.age }} año{{ person.age|pluralize }}){% endif %}{% else %}--{% endif %}</span></div>
+                    <div class="info-row"><span class="info-label">Sexo:</span><span class="info-value">{{ person.get_sexo_display|title|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Nacionalidad:</span><span class="info-value">{{ person.nacionality|default:"--" }}</span></div>
+                </div>
+            </div>
+
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-location-dot"></i> Contacto y Dirección</h2>
+                <div class="info-list">
+                    <div class="info-row"><span class="info-label">Teléfono Móvil:</span><span class="info-value">{{ person.cellphonenumber|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Teléfono Fijo:</span><span class="info-value">{{ person.telefonenumber|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Correo Electrónico:</span><span class="info-value">{{ person.email|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Correo Institucional:</span><span class="info-value">{{ person.emailinst|default:"--" }}</span></div>
+                    <div class="info-row items-start">
+                        <span class="info-label">Dirección:</span>
+                        <span class="info-value">
+                            {% if person.streetaddress or person.city or person.canton or person.ciudadela or person.sector %}
+                                {% if person.streetaddress %}{{ person.streetaddress }}{% if person.numberstreet %} {{ person.numberstreet }}{% endif %}{% if person.secondarystreetaddress %} y {{ person.secondarystreetaddress }}{% endif %}<br>{% endif %}
+                                {% if person.ciudadela %}Cdla. {{ person.ciudadela }}{% if person.sector %}, {% endif %}{% endif %}{% if person.sector %}Sector {{ person.sector }}{% endif %}{% if person.ciudadela or person.sector %}<br>{% endif %}
+                                {% if person.parish %}{{ person.parish.name }}, {% endif %}{% if person.city %}{{ person.city }}{% elif person.canton %}{{ person.canton.name }}{% endif %}{% if person.province %}, {{ person.province.name }}{% endif %}{% if person.country %} · {{ person.country.name }}{% endif %}
+                                {% if person.reference %}<br><span class="text-slate-500 font-normal">Ref.: {{ person.reference }}</span>{% endif %}
+                            {% else %}
+                                No registrada
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-notes-medical"></i> Ficha Médica</h2>
+                <div class="info-list">
+                    <div class="info-row"><span class="info-label">Tipo de Sangre:</span><span class="info-value blood-type">{% if patient.blood_group %}{{ patient.blood_group }}{{ patient.rh_factor|default:"" }}{% else %}No registrado{% endif %}</span></div>
+                    <div class="info-row"><span class="info-label">Peso / Talla:</span><span class="info-value">{% if patient.weight %}{{ patient.weight }} kg{% else %}--{% endif %} / {% if patient.height %}{{ patient.height }} cm{% else %}--{% endif %}</span></div>
+                    <div class="info-row"><span class="info-label">IMC:</span><span id="bmiValue" class="info-value" data-weight="{{ patient.weight|default_if_none:''|stringformat:'s' }}" data-height="{{ patient.height|default_if_none:''|stringformat:'s' }}">--</span></div>
+                    <div class="info-row"><span class="info-label">Presión Arterial:</span><span class="info-value">{{ patient.blood_pressure|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Diabetes:</span><span class="info-value">{% if patient.diabetes %}Sí{% else %}No{% endif %}</span></div>
+                    <div class="info-row"><span class="info-label">Nº Historia Clínica:</span><span class="info-value font-mono">{{ patient.medical_record_number|default:"--" }}</span></div>
+                    <div class="info-row"><span class="info-label">Nº de Seguro:</span><span class="info-value font-mono">{{ patient.insurance_number|default:"No registrado" }}</span></div>
+                </div>
+            </div>
+
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> Alergias</h2>
+                <div class="chip-group">
+                    {% for pa in alergies %}
+                        <span class="chip chip-allergy"><i class="fa-solid fa-triangle-exclamation"></i>{{ pa.alergy.name }}</span>
+                    {% empty %}
+                        <p class="text-xs text-slate-500">Ninguna reportada.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card card-body">
+                <h2 class="card-title"><i class="fa-solid fa-phone-volume"></i> Contacto de Emergencia</h2>
+                {% include 'panel/partials/emergency_contact.html' with patient=patient %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        (function () {
+            const el = document.getElementById('bmiValue');
+            const bmi = calcBMI(el.dataset.weight, el.dataset.height);
+            if (bmi) {
+                el.textContent = bmi.value + ' · ' + bmi.label;
+                el.classList.add('bmi-' + bmi.tone);
+            }
+        })();
+    </script>
+{% endblock %}

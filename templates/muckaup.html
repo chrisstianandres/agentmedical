@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CenterMedical - Portal de Gestión Médica</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 font-sans antialiased bg-slate-100 flex overflow-hidden">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transition-all duration-300 z-30 shrink-0">
+        <div>
+            <!-- Logo Header -->
+            <div class="h-16 flex items-center px-6 bg-slate-950/60 border-b border-slate-800/80 justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('reservar')">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-hospital text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-white text-base tracking-tight block leading-none">CenterMedical</span>
+                        <span class="text-[10px] text-indigo-400 uppercase tracking-wider font-semibold">Portal Pacientes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1">
+                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Menú Principal</div>
+                
+                <button onclick="switchView('reservar')" id="nav-reservar" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/20 transition-all">
+                    <i class="fa-solid fa-calendar-plus w-5 text-center text-indigo-200"></i>
+                    <span class="text-sm">Reservar Cita</span>
+                </button>
+
+                <button onclick="switchView('mis-citas')" id="nav-mis-citas" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium transition-all">
+                    <i class="fa-solid fa-clock-rotate-left w-5 text-center text-slate-400"></i>
+                    <span class="text-sm">Mis Citas</span>
+                    <span class="ml-auto text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold">2</span>
+                </button>
+
+                <button onclick="switchView('directorio')" id="nav-directorio" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium transition-all">
+                    <i class="fa-solid fa-user-doctor w-5 text-center text-slate-400"></i>
+                    <span class="text-sm">Directorio Médico</span>
+                </button>
+
+                <button onclick="switchView('facturacion')" id="nav-facturacion" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium transition-all">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-slate-400"></i>
+                    <span class="text-sm">Facturación</span>
+                </button>
+
+                <div class="pt-6 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Mi Cuenta</div>
+
+                <button onclick="switchView('perfil')" id="nav-perfil" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium transition-all">
+                    <i class="fa-solid fa-id-card w-5 text-center text-slate-400"></i>
+                    <span class="text-sm">Perfil de Paciente</span>
+                </button>
+
+                <button onclick="switchView('configuracion')" id="nav-configuracion" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium transition-all">
+                    <i class="fa-solid fa-gear w-5 text-center text-slate-400"></i>
+                    <span class="text-sm">Configuración</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- User Logout Footer -->
+        <div class="p-4 border-t border-slate-800/80 bg-slate-950/30">
+            <button onclick="showToast('Sesión cerrada correctamente')" class="w-full flex items-center justify-between px-3 py-2.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all">
+                <span class="flex items-center gap-2 font-medium">
+                    <i class="fa-solid fa-power-off"></i>
+                    Cerrar Sesión
+                </span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- TOP BAR -->
+        <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-sm z-20 shrink-0">
+            <div class="flex items-center gap-4">
+                <button id="toggleSidebar" class="text-slate-500 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                
+                <nav class="hidden sm:flex items-center text-xs text-slate-500 space-x-2">
+                    <span onclick="switchView('reservar')" class="hover:text-slate-800 cursor-pointer">Inicio</span>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                    <span class="hover:text-slate-800 cursor-pointer">Pacientes</span>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                    <span id="breadcrumbCurrent" class="font-semibold text-indigo-600">Reservar Cita Médica</span>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Search Bar -->
+                <div class="relative hidden md:block w-60">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" placeholder="Buscar especialista, síntoma..." class="w-full pl-9 pr-3 py-1.5 bg-slate-100 text-xs border border-transparent rounded-lg focus:bg-white focus:border-indigo-500 focus:outline-none transition-all">
+                </div>
+
+                <!-- Notifications Pill -->
+                <button onclick="showToast('No tienes nuevas notificaciones')" class="relative text-slate-500 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                    <i class="fa-regular fa-bell text-base"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-white"></span>
+                </button>
+
+                <!-- Patient Profile Widget -->
+                <div onclick="switchView('perfil')" class="flex items-center gap-3 pl-3 border-l border-slate-200 cursor-pointer hover:opacity-80 transition-opacity">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120" alt="María Fernanda Lopez" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/20">
+                    <div class="hidden lg:block text-left leading-tight">
+                        <div class="text-xs font-semibold text-slate-800">María Fernanda López</div>
+                        <div class="text-[10px] text-slate-500">Paciente VIP #8402</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD CONTAINER (Dynamic Content Views) -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+            
+            <!-- VIEW 1: RESERVAR CITA -->
+            <section id="view-reservar" class="view-panel space-y-6 animate-fade-in">
+                <!-- Page Banner -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            Reservar Cita Médica
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Atención Presencial / Virtual</span>
+                        </h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Selecciona la especialidad requerida para desplegar los médicos disponibles y agendas de atención.</p>
+                    </div>
+
+                    <!-- Testing Shortcuts -->
+                    <div class="flex items-center gap-2 self-start sm:self-auto bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
+                        <span class="text-[11px] font-medium text-slate-500 px-2">Demostración:</span>
+                        <button onclick="resetSelection()" class="px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                            Sin Selección
+                        </button>
+                        <button onclick="presetDoctor('pediatria', 'doc-1')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-doctor text-[10px]"></i>
+                            Dr. Gómez Morán
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Booking Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Left: Booking Form -->
+                    <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">1</span>
+                                <h2 class="font-semibold text-slate-800 text-base">Datos de la Consulta</h2>
+                            </div>
+                            <span class="text-xs text-slate-400">* Campos obligatorios</span>
+                        </div>
+
+                        <form id="appointmentForm" onsubmit="handleBooking(event)" class="space-y-5">
+                            
+                            <!-- Specialty & Doctor Selects -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                        1. Especialidad Médica <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <select id="specialtySelect" onchange="onSpecialtyChange()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all font-medium">
+                                            <option value="">-- Seleccionar Especialidad --</option>
+                                            <option value="pediatria">Pediatría</option>
+                                            <option value="neurologia">Neurología</option>
+                                            <option value="cardiologia">Cardiología</option>
+                                            <option value="dermatologia">Dermatología</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                        2. Médico Especialista <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <select id="doctorSelect" onchange="onDoctorChange()" disabled class="w-full appearance-none bg-slate-100 border border-slate-200 text-slate-400 text-sm rounded-xl px-3.5 py-2.5 pr-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:cursor-not-allowed transition-all font-medium">
+                                            <option value="">-- Primero elija especialidad --</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                    <p id="doctorHint" class="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
+                                        <i class="fa-solid fa-circle-info text-[10px]"></i>
+                                        Selecciona una especialidad para desplegar médicos.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Date & Time Slot -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                        3. Fecha de la Cita <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input type="date" id="appointmentDate" value="2026-09-28" min="2026-09-26" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                        4. Turno Disponibles <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input type="hidden" id="selectedTime" value="09:30 AM">
+                                    <div id="timeSlotsContainer" class="grid grid-cols-3 gap-1.5 opacity-50 pointer-events-none transition-opacity">
+                                        <button type="button" onclick="selectTime('08:30 AM', this)" class="time-btn text-xs py-2 px-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-indigo-500 transition-all text-center">08:30 AM</button>
+                                        <button type="button" onclick="selectTime('09:30 AM', this)" class="time-btn active-time text-xs py-2 px-1 rounded-lg border border-indigo-600 bg-indigo-600 text-white font-medium shadow-sm transition-all text-center">09:30 AM</button>
+                                        <button type="button" onclick="selectTime('11:00 AM', this)" class="time-btn text-xs py-2 px-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-indigo-500 transition-all text-center">11:00 AM</button>
+                                        <button type="button" onclick="selectTime('02:30 PM', this)" class="time-btn text-xs py-2 px-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-indigo-500 transition-all text-center">02:30 PM</button>
+                                        <button type="button" onclick="selectTime('04:00 PM', this)" class="time-btn text-xs py-2 px-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-indigo-500 transition-all text-center">04:00 PM</button>
+                                        <button type="button" onclick="selectTime('05:15 PM', this)" class="time-btn text-xs py-2 px-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-indigo-500 transition-all text-center">05:15 PM</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div class="pt-2">
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                    Motivo de la Consulta / Sintomatología <span class="text-slate-400 font-normal">(Opcional)</span>
+                                </label>
+                                <textarea rows="2" placeholder="Describe brevemente el motivo de tu visita o síntomas..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all resize-none"></textarea>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <button type="button" onclick="resetSelection()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors">
+                                    Limpiar
+                                </button>
+
+                                <button type="submit" id="submitBtn" disabled class="px-6 py-2.5 rounded-xl bg-slate-200 text-slate-400 text-sm font-semibold flex items-center gap-2 cursor-not-allowed transition-all shadow-none">
+                                    <i class="fa-solid fa-calendar-check text-xs"></i>
+                                    Confirmar Reserva Cita
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right Column: Doctor Profile / Empty State Card -->
+                    <div class="lg:col-span-5">
+
+                        <!-- STATE 1: EMPTY STATE -->
+                        <div id="emptyStateCard" class="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center flex flex-col items-center justify-center min-h-[460px] shadow-sm transition-all">
+                            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4 ring-8 ring-slate-50">
+                                <i class="fa-solid fa-user-doctor text-3xl text-slate-300"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-800 tracking-tight">Sin Médico Seleccionado</h3>
+                            <p class="text-xs text-slate-500 max-w-xs mt-2 leading-relaxed">
+                                Por favor elige una <strong class="text-slate-700">Especialidad</strong> y un <strong class="text-slate-700">Doctor</strong> en el formulario para previsualizar la información del especialista, ubicación y arancel.
+                            </p>
+                            <div class="mt-6 w-full max-w-xs bg-slate-50 rounded-xl p-3.5 border border-slate-100 text-left space-y-2">
+                                <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">¿Qué verás aquí?</div>
+                                <div class="flex items-center gap-2 text-xs text-slate-600">
+                                    <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                    Fotografía y perfil profesional verificado
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-slate-600">
+                                    <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                    Años de experiencia y trayectoria
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-slate-600">
+                                    <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                    Ubicación de consultorio y costo
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STATE 2: ACTIVE DOCTOR CARD -->
+                        <div id="doctorCard" class="hidden bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden transition-all animate-fade-in">
+                            <div class="h-28 bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 relative p-4 flex items-start justify-between">
+                                <span class="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-white text-[11px] font-medium border border-white/20 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Disponible
+                                </span>
+                            </div>
+
+                            <div class="px-6 pb-6 text-center -mt-14 relative z-10">
+                                <div class="relative inline-block mb-3">
+                                    <img id="docPhoto" src="" alt="Doctor" class="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-xl mx-auto">
+                                    <span class="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center border-2 border-white shadow-sm" title="Verificado">
+                                        <i class="fa-solid fa-check"></i>
+                                    </span>
+                                </div>
+
+                                <h3 id="docName" class="text-lg font-bold text-slate-900 leading-snug">--</h3>
+                                <p id="docSpecialty" class="text-xs font-semibold text-indigo-600 mt-0.5">--</p>
+                                <p id="docLocation" class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-location-dot text-rose-500"></i>
+                                    <span>--</span>
+                                </p>
+
+                                <div class="grid grid-cols-3 gap-2 py-3 px-2 bg-slate-50 rounded-xl border border-slate-100 my-4">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800 flex items-center justify-center gap-1">
+                                            <i class="fa-solid fa-star text-amber-400 text-[11px]"></i>
+                                            <span id="docRating">4.9</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Valoración</div>
+                                    </div>
+                                    <div class="border-x border-slate-200">
+                                        <div id="docExp" class="text-xs font-bold text-slate-800">--</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Experiencia</div>
+                                    </div>
+                                    <div>
+                                        <div id="docPatients" class="text-xs font-bold text-slate-800">--</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Pacientes</div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2.5 text-left text-xs bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100/60">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-500">Consultorio:</span>
+                                        <span id="docRoom" class="font-semibold text-slate-800">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-500">Costo Consulta:</span>
+                                        <span id="docPrice" class="font-bold text-indigo-700 text-sm">--</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-1 border-t border-indigo-100">
+                                        <span class="text-slate-500">Seguros aceptados:</span>
+                                        <span class="text-[11px] font-medium text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded">Humana, BMI, Salud</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 text-left">
+                                    <p id="docBio" class="text-xs text-slate-500 line-clamp-3 leading-relaxed">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: MIS CITAS -->
+            <section id="view-mis-citas" class="view-panel space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Gestión de Citas Médicas</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Revisa el estado de tus citas programadas, historial y accesos a telemedicina.</p>
+                    </div>
+                    <button onclick="switchView('reservar')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i>
+                        Agendar Nueva Cita
+                    </button>
+                </div>
+
+                <!-- Tabs Filter -->
+                <div class="flex border-b border-slate-200 text-sm font-medium text-slate-500 gap-6">
+                    <button class="pb-3 border-b-2 border-indigo-600 text-indigo-600 font-semibold">Próximas Citas (2)</button>
+                    <button class="pb-3 border-b-2 border-transparent hover:text-slate-800">Historial de Consultas (12)</button>
+                    <button class="pb-3 border-b-2 border-transparent hover:text-slate-800">Canceladas (1)</button>
+                </div>
+
+                <!-- Appointments List -->
+                <div class="space-y-4">
+                    <!-- Appointment Item 1 -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=200" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold">Presencial</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold flex items-center gap-1">
+                                        <i class="fa-solid fa-circle text-[8px]"></i> Confirmada
+                                    </span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base mt-1">Dr. Christian Andrés Gómez Morán</h3>
+                                <p class="text-xs text-indigo-600 font-medium">Pediatría & Neurología Infantil</p>
+                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-3">
+                                    <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> 28 Sept, 2026</span>
+                                    <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i> 09:30 AM</span>
+                                    <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> Torre Médica A - Cons. 304</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                            <button onclick="showToast('Recordatorio enviado a tu correo')" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-all">
+                                Recordatorio
+                            </button>
+                            <button onclick="showToast('Opción de reagenda activada')" class="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-all">
+                                Reagendar
+                            </button>
+                            <button onclick="showToast('Cita cancelada correctamente')" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Item 2 -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 font-semibold">Telemedicina</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold flex items-center gap-1">
+                                        <i class="fa-solid fa-clock text-[8px]"></i> Pendiente Confirmación
+                                    </span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base mt-1">Dra. Valeria Ríos</h3>
+                                <p class="text-xs text-indigo-600 font-medium">Cardiología Clínica</p>
+                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-3">
+                                    <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> 02 Oct, 2026</span>
+                                    <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i> 03:00 PM</span>
+                                    <span><i class="fa-solid fa-video text-cyan-600 mr-1"></i> Sala Virtual CenterMedical</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                            <button onclick="showToast('Iniciando sala virtual...')" class="px-4 py-2 rounded-xl bg-cyan-600 text-white text-xs font-semibold hover:bg-cyan-700 transition-all flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-video"></i> Unirse a Consulta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: DIRECTORIO MÉRICO -->
+            <section id="view-directorio" class="view-panel space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Directorio Médico Especializado</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Encuentra y agenda directamente con el profesional médico que requieras.</p>
+                    </div>
+
+                    <!-- Search / Filter bar -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="dirSearchInput" onkeyup="filterDirectory()" placeholder="Buscar por nombre o especialidad..." class="bg-white border border-slate-300 rounded-xl text-xs px-3 py-2 w-64 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <select id="dirSpecFilter" onchange="filterDirectory()" class="bg-white border border-slate-300 rounded-xl text-xs px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="">Todas las Especialidades</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="neurologia">Neurología</option>
+                            <option value="cardiologia">Cardiología</option>
+                            <option value="dermatologia">Dermatología</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Doctor Directory Grid -->
+                <div id="directoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Card 1 -->
+                    <div class="doc-dir-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-spec="pediatria neurologia" data-name="christian gomez moran">
+                        <div>
+                            <div class="flex items-start gap-3">
+                                <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=200" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm">Dr. Christian Andrés Gómez Morán</h3>
+                                    <p class="text-xs text-indigo-600 font-semibold mt-0.5">Pediatría & Neurología Infantil</p>
+                                    <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
+                                        <i class="fa-solid fa-star text-[11px]"></i> 4.9 <span class="text-slate-400 font-normal">(89 reseñas)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-3 line-clamp-2">Especialista en desarrollo neurológico infantil, atención pediátrica integral y diagnóstico precoz.</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                                <div class="flex justify-between"><span>Ubicación:</span><span class="font-medium text-slate-800">Guayas, Milagro</span></div>
+                                <div class="flex justify-between"><span>Experiencia:</span><span class="font-medium text-slate-800">14 Años</span></div>
+                                <div class="flex justify-between"><span>Consulta:</span><span class="font-bold text-indigo-600">$45.00 USD</span></div>
+                            </div>
+                        </div>
+                        <button onclick="presetDoctor('pediatria', 'doc-1')" class="mt-4 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check"></i> Reservar Cita
+                        </button>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="doc-dir-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-spec="pediatria" data-name="carmen luzuriaga">
+                        <div>
+                            <div class="flex items-start gap-3">
+                                <img src="https://images.unsplash.com/photo-1594824813571-24a69c100d3d?auto=format&fit=crop&q=80&w=200" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm">Dra. Carmen Luzuriaga</h3>
+                                    <p class="text-xs text-indigo-600 font-semibold mt-0.5">Pediatría General</p>
+                                    <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
+                                        <i class="fa-solid fa-star text-[11px]"></i> 4.8 <span class="text-slate-400 font-normal">(64 reseñas)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-3 line-clamp-2">Pediatra enfocada en nutrición infantil, vacunas y controles de desarrollo desde lactantes.</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                                <div class="flex justify-between"><span>Ubicación:</span><span class="font-medium text-slate-800">Guayas, Guayaquil</span></div>
+                                <div class="flex justify-between"><span>Experiencia:</span><span class="font-medium text-slate-800">9 Años</span></div>
+                                <div class="flex justify-between"><span>Consulta:</span><span class="font-bold text-indigo-600">$40.00 USD</span></div>
+                            </div>
+                        </div>
+                        <button onclick="presetDoctor('pediatria', 'doc-2')" class="mt-4 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check"></i> Reservar Cita
+                        </button>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="doc-dir-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-spec="cardiologia" data-name="valeria rios">
+                        <div>
+                            <div class="flex items-start gap-3">
+                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm">Dra. Valeria Ríos</h3>
+                                    <p class="text-xs text-indigo-600 font-semibold mt-0.5">Cardiología Clínica</p>
+                                    <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
+                                        <i class="fa-solid fa-star text-[11px]"></i> 4.9 <span class="text-slate-400 font-normal">(140 reseñas)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-3 line-clamp-2">Experta en salud cardiovascular preventiva, hipertensión arterial y ecocardiografía avanzada.</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                                <div class="flex justify-between"><span>Ubicación:</span><span class="font-medium text-slate-800">Guayas, Guayaquil</span></div>
+                                <div class="flex justify-between"><span>Experiencia:</span><span class="font-medium text-slate-800">11 Años</span></div>
+                                <div class="flex justify-between"><span>Consulta:</span><span class="font-bold text-indigo-600">$55.00 USD</span></div>
+                            </div>
+                        </div>
+                        <button onclick="presetDoctor('cardiologia', 'doc-4')" class="mt-4 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check"></i> Reservar Cita
+                        </button>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="doc-dir-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-spec="dermatologia" data-name="carlos mendoza">
+                        <div>
+                            <div class="flex items-start gap-3">
+                                <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/10">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm">Dr. Carlos Mendoza</h3>
+                                    <p class="text-xs text-indigo-600 font-semibold mt-0.5">Dermatología Médica</p>
+                                    <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
+                                        <i class="fa-solid fa-star text-[11px]"></i> 4.7 <span class="text-slate-400 font-normal">(95 reseñas)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-3 line-clamp-2">Tratamiento dermatológico clínico, acné, dermatoscopia de lunares y cuidado de la piel.</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                                <div class="flex justify-between"><span>Ubicación:</span><span class="font-medium text-slate-800">Azuay, Cuenca</span></div>
+                                <div class="flex justify-between"><span>Experiencia:</span><span class="font-medium text-slate-800">8 Años</span></div>
+                                <div class="flex justify-between"><span>Consulta:</span><span class="font-bold text-indigo-600">$45.00 USD</span></div>
+                            </div>
+                        </div>
+                        <button onclick="presetDoctor('dermatologia', 'doc-5')" class="mt-4 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check"></i> Reservar Cita
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- VIEW 4: FACTURACIÓN -->
+            <section id="view-facturacion" class="view-panel space-y-6 hidden">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Facturación & Pagos Médicos</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Consulta tu historial de facturas, reembolsos con seguro y comprobantes digitales.</p>
+                </div>
+
+                <!-- Stats summary -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Pagos Este Año</div>
+                        <div class="text-2xl font-bold text-slate-900 mt-1">$380.00 USD</div>
+                        <div class="text-[11px] text-emerald-600 mt-1"><i class="fa-solid fa-shield-check mr-1"></i> Cobertura Humana Salud</div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Facturas Pendientes</div>
+                        <div class="text-2xl font-bold text-indigo-600 mt-1">$45.00 USD</div>
+                        <div class="text-[11px] text-indigo-500 mt-1"><i class="fa-solid fa-clock mr-1"></i> Vence el 30 Sept, 2026</div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Método Principal</div>
+                        <div class="text-sm font-bold text-slate-800 mt-2 flex items-center gap-2">
+                            <i class="fa-brands fa-cc-visa text-indigo-600 text-lg"></i> •••• •••• •••• 4821
+                        </div>
+                        <div class="text-[11px] text-slate-400 mt-1">Visa Débito Preferente</div>
+                    </div>
+                </div>
+
+                <!-- Invoice Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 text-sm">Historial de Comprobantes</h3>
+                        <button onclick="showToast('Descargando reporte en PDF...')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Descargar Todo</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-100">
+                                <tr>
+                                    <th class="p-3.5 pl-5">Nº Factura</th>
+                                    <th class="p-3.5">Fecha</th>
+                                    <th class="p-3.5">Médico / Concepto</th>
+                                    <th class="p-3.5">Monto Total</th>
+                                    <th class="p-3.5">Cobertura Seguro</th>
+                                    <th class="p-3.5">Estado</th>
+                                    <th class="p-3.5 pr-5 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50/80">
+                                    <td class="p-3.5 pl-5 font-mono font-semibold text-slate-800">FAC-2026-0891</td>
+                                    <td class="p-3.5">28/09/2026</td>
+                                    <td class="p-3.5 font-medium text-slate-800">Dr. Christian Gómez Morán - Pediatría</td>
+                                    <td class="p-3.5 font-bold text-slate-900">$45.00</td>
+                                    <td class="p-3.5 text-emerald-600 font-medium">80% ($36.00)</td>
+                                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-[10px]">Pendiente ($9.00 copago)</span></td>
+                                    <td class="p-3.5 pr-5 text-right">
+                                        <button onclick="showToast('Iniciando pago seguro de $9.00 USD...')" class="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-[11px] font-semibold hover:bg-indigo-700">Pagar Copago</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80">
+                                    <td class="p-3.5 pl-5 font-mono font-semibold text-slate-800">FAC-2026-0742</td>
+                                    <td class="p-3.5">14/08/2026</td>
+                                    <td class="p-3.5 font-medium text-slate-800">Dra. Valeria Ríos - Cardiología</td>
+                                    <td class="p-3.5 font-bold text-slate-900">$55.00</td>
+                                    <td class="p-3.5 text-emerald-600 font-medium">80% ($44.00)</td>
+                                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]">Pagado</span></td>
+                                    <td class="p-3.5 pr-5 text-right">
+                                        <button onclick="showToast('Descargando PDF comprobante...')" class="text-slate-500 hover:text-indigo-600 font-medium"><i class="fa-solid fa-download"></i> PDF</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80">
+                                    <td class="p-3.5 pl-5 font-mono font-semibold text-slate-800">FAC-2026-0510</td>
+                                    <td class="p-3.5">02/06/2026</td>
+                                    <td class="p-3.5 font-medium text-slate-800">Dr. Carlos Mendoza - Dermatología</td>
+                                    <td class="p-3.5 font-bold text-slate-900">$45.00</td>
+                                    <td class="p-3.5 text-emerald-600 font-medium">100% ($45.00)</td>
+                                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]">Pagado</span></td>
+                                    <td class="p-3.5 pr-5 text-right">
+                                        <button onclick="showToast('Descargando PDF comprobante...')" class="text-slate-500 hover:text-indigo-600 font-medium"><i class="fa-solid fa-download"></i> PDF</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 5: PERFIL DE PACIENTE -->
+            <section id="view-perfil" class="view-panel space-y-6 hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <!-- Cover Header -->
+                    <div class="h-32 bg-gradient-to-r from-indigo-900 via-indigo-700 to-indigo-500 p-6 flex justify-end items-start">
+                        <button onclick="showToast('Modo edición de perfil activado')" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl text-xs font-semibold transition-all">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Perfil
+                        </button>
+                    </div>
+                    <!-- Profile Info -->
+                    <div class="px-6 pb-6 pt-0 relative flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-12">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" class="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-lg shrink-0">
+                        <div class="text-center sm:text-left">
+                            <h2 class="text-xl font-bold text-slate-900">María Fernanda López Silva</h2>
+                            <p class="text-xs text-indigo-600 font-semibold">Paciente VIP - ID #8402</p>
+                            <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i> Guayaquil, Ecuador</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Personal info -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">Información Personal</h3>
+                        <div class="text-xs space-y-2">
+                            <div class="flex justify-between"><span class="text-slate-500">Cédula / Identificación:</span><span class="font-medium text-slate-800">0928374192</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Fecha Nacimiento:</span><span class="font-medium text-slate-800">14/05/1992 (34 años)</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Teléfono Movil:</span><span class="font-medium text-slate-800">+593 99 123 4567</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Correo Electrónico:</span><span class="font-medium text-slate-800">m.lopez@example.com</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Background -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">Ficha Médica & Alergias</h3>
+                        <div class="text-xs space-y-2">
+                            <div class="flex justify-between"><span class="text-slate-500">Tipo de Sangre:</span><span class="font-bold text-rose-600">O Rhesus Positivo (O+)</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Alergias Conocidas:</span><span class="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">Penicilina</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Condición Crónica:</span><span class="font-medium text-slate-800">Ninguna reportada</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Contacto Emergencia:</span><span class="font-medium text-slate-800">Carlos López (Esposo)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Insurance -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">Seguro Médico Activo</h3>
+                        <div class="text-xs space-y-2">
+                            <div class="flex justify-between"><span class="text-slate-500">Aseguradora:</span><span class="font-bold text-emerald-700">Humana Salud Ecuador</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Nº de Póliza:</span><span class="font-mono text-slate-800">HUM-88392-VIP</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Cobertura Citas:</span><span class="font-medium text-slate-800">80% Ambulatoria</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Vigencia:</span><span class="font-medium text-emerald-600">Activa hasta 12/2027</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 6: CONFIGURACIÓN -->
+            <section id="view-configuracion" class="view-panel space-y-6 hidden">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Configuración del Sistema</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Gestiona tus preferencias de notificación, seguridad y ajustes de cuenta.</p>
+                </div>
+
+                <div class="max-w-3xl space-y-6">
+                    <!-- Notifications block -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 flex items-center gap-2">
+                            <i class="fa-regular fa-bell text-indigo-600"></i> Notificaciones & Recordatorios
+                        </h3>
+                        <div class="space-y-3 text-xs">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <div class="font-semibold text-slate-800">Recordatorios por WhatsApp</div>
+                                    <div class="text-slate-500">Recibe alertas 24h antes de tus citas agendadas.</div>
+                                </div>
+                                <input type="checkbox" checked class="w-4 h-4 accent-indigo-600">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer pt-2 border-t border-slate-100">
+                                <div>
+                                    <div class="font-semibold text-slate-800">Notificaciones por Correo Electrónico</div>
+                                    <div class="text-slate-500">Recibe confirmaciones de reserva y comprobantes en tu email.</div>
+                                </div>
+                                <input type="checkbox" checked class="w-4 h-4 accent-indigo-600">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Security block -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-lock text-indigo-600"></i> Seguridad y Privacidad
+                        </h3>
+                        <div class="space-y-3 text-xs">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-slate-800">Autenticación en Dos Pasos (2FA)</div>
+                                    <div class="text-slate-500">Protege tu cuenta con un código temporal al iniciar sesión.</div>
+                                </div>
+                                <button onclick="showToast('2FA Activado correctamente')" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200">Activar</button>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                                <div>
+                                    <div class="font-semibold text-slate-800">Cambiar Contraseña</div>
+                                    <div class="text-slate-500">Última modificación hace 3 meses.</div>
+                                </div>
+                                <button onclick="showToast('Enlace enviado para restablecer contraseña')" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-100">Actualizar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- SUCCESS CONFIRMATION MODAL -->
+    <div id="successModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl animate-fade-in relative">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">¡Cita Reservada Exitosamente!</h3>
+            <p class="text-xs text-slate-500 mt-1">Se ha enviado un correo de confirmación con la orden y los detalles del consultorio.</p>
+
+            <div id="modalSummary" class="mt-4 p-4 bg-slate-50 rounded-xl text-left text-xs space-y-2 border border-slate-200">
+                <!-- Summary inserted via JS -->
+            </div>
+
+            <button onclick="closeModalAndGoAppointments()" class="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/20">
+                Entendido / Ir a Mis Citas
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-medium shadow-2xl z-50 flex items-center gap-2 transition-all opacity-0 pointer-events-none transform translate-y-2">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMsg">Notificación</span>
+    </div>
+
+    <script>
+        // Doctors Dataset mapped by Specialty
+        const DOCTORS_DATA = {
+            'pediatria': [
+                {
+                    id: 'doc-1',
+                    name: 'Dr. Christian Andrés Gómez Morán',
+                    specialty: 'Pediatría & Neurología Infantil',
+                    location: 'Ecuador - Guayas, Milagro',
+                    photo: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400',
+                    rating: '4.9 (89 reseñas)',
+                    experience: '14 Años',
+                    patients: '2,100+',
+                    room: 'Torre Médica A - Consultorio 304',
+                    price: '$45.00 USD',
+                    bio: 'Especialista en atención pediátrica integral, desarrollo neurológico infantil y diagnóstico precoz con más de 14 años de trayectoria hospitalaria.'
+                },
+                {
+                    id: 'doc-2',
+                    name: 'Dra. Carmen Luzuriaga',
+                    specialty: 'Pediatría General',
+                    location: 'Ecuador - Guayas, Guayaquil',
+                    photo: 'https://images.unsplash.com/photo-1594824813571-24a69c100d3d?auto=format&fit=crop&q=80&w=400',
+                    rating: '4.8 (64 reseñas)',
+                    experience: '9 Años',
+                    patients: '1,250+',
+                    room: 'Edificio Alfa - Cons. 102',
+                    price: '$40.00 USD',
+                    bio: 'Pediatra enfocada en nutrición infantil, vacunas y controles de desarrollo desde lactantes hasta adolescentes.'
+                }
+            ],
+            'neurologia': [
+                {
+                    id: 'doc-1',
+                    name: 'Dr. Christian Andrés Gómez Morán',
+                    specialty: 'Neurología & Pediatría',
+                    location: 'Ecuador - Guayas, Milagro',
+                    photo: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400',
+                    rating: '4.9 (89 reseñas)',
+                    experience: '14 Años',
+                    patients: '2,100+',
+                    room: 'Torre Médica A - Consultorio 304',
+                    price: '$50.00 USD',
+                    bio: 'Diagnóstico y tratamiento de trastornos neuromusculares, cefaleas, epilepsia y trastornos del sueño.'
+                }
+            ],
+            'cardiologia': [
+                {
+                    id: 'doc-4',
+                    name: 'Dra. Valeria Ríos',
+                    specialty: 'Cardiología Clínica & Ecocardiografía',
+                    location: 'Ecuador - Guayas, Guayaquil',
+                    photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=400',
+                    rating: '4.9 (140 reseñas)',
+                    experience: '11 Años',
+                    patients: '1,800+',
+                    room: 'Torre Médica B - Consultorio 501',
+                    price: '$55.00 USD',
+                    bio: 'Experta en salud cardiovascular preventiva, hipertensión arterial y ecocardiografía avanzada.'
+                }
+            ],
+            'dermatologia': [
+                {
+                    id: 'doc-5',
+                    name: 'Dr. Carlos Mendoza',
+                    specialty: 'Dermatología Médica & Estética',
+                    location: 'Ecuador - Azuay, Cuenca',
+                    photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=400',
+                    rating: '4.7 (95 reseñas)',
+                    experience: '8 Años',
+                    patients: '980+',
+                    room: 'Consultorios Médicos del Sol - 203',
+                    price: '$45.00 USD',
+                    bio: 'Especialista en tratamiento dermatológico clínico, acné, dermatoscopia de lunares y rejuvenecimiento cutáneo.'
+                }
+            ]
+        };
+
+        let currentDoctor = null;
+
+        // View Switcher Router
+        function switchView(viewName) {
+            // Hide all view panels
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+            
+            // Show target panel
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+
+            // Update Breadcrumb
+            const breadcrumb = document.getElementById('breadcrumbCurrent');
+            const navTitles = {
+                'reservar': 'Reservar Cita Médica',
+                'mis-citas': 'Mis Citas Programadas',
+                'directorio': 'Directorio Médico',
+                'facturacion': 'Facturación y Comprobantes',
+                'perfil': 'Perfil del Paciente',
+                'configuracion': 'Configuración de Cuenta'
+            };
+            if (breadcrumb && navTitles[viewName]) {
+                breadcrumb.textContent = navTitles[viewName];
+            }
+
+            // Update Sidebar buttons state
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeNav = document.getElementById(`nav-${viewName}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+            }
+        }
+
+        // Event Handler: When Specialty selection changes
+        function onSpecialtyChange() {
+            const specSelect = document.getElementById('specialtySelect');
+            const docSelect = document.getElementById('doctorSelect');
+            const docHint = document.getElementById('doctorHint');
+            const selectedSpec = specSelect.value;
+
+            // Reset doctor select options
+            docSelect.innerHTML = '<option value="">-- Seleccionar Médico --</option>';
+
+            if (selectedSpec && DOCTORS_DATA[selectedSpec]) {
+                docSelect.disabled = false;
+                docSelect.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                docSelect.classList.add('bg-slate-50', 'text-slate-800');
+                docHint.classList.add('hidden');
+
+                DOCTORS_DATA[selectedSpec].forEach(doc => {
+                    const opt = document.createElement('option');
+                    opt.value = doc.id;
+                    opt.textContent = doc.name;
+                    docSelect.appendChild(opt);
+                });
+
+                // Auto select first doctor for smoother UX
+                docSelect.selectedIndex = 1;
+                onDoctorChange();
+
+            } else {
+                docSelect.disabled = true;
+                docSelect.classList.add('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+                docSelect.classList.remove('bg-slate-50', 'text-slate-800');
+                docHint.classList.remove('hidden');
+                
+                showEmptyState();
+            }
+            updateSubmitButtonState();
+        }
+
+        // Event Handler: When Doctor selection changes
+        function onDoctorChange() {
+            const specSelect = document.getElementById('specialtySelect');
+            const docSelect = document.getElementById('doctorSelect');
+            const selectedSpec = specSelect.value;
+            const selectedDocId = docSelect.value;
+
+            if (selectedSpec && selectedDocId) {
+                const doc = DOCTORS_DATA[selectedSpec].find(d => d.id === selectedDocId);
+                if (doc) {
+                    renderDoctorCard(doc);
+                } else {
+                    showEmptyState();
+                }
+            } else {
+                showEmptyState();
+            }
+            updateSubmitButtonState();
+        }
+
+        // Render Doctor Card Right Side
+        function renderDoctorCard(doc) {
+            currentDoctor = doc;
+            document.getElementById('emptyStateCard').classList.add('hidden');
+            
+            const card = document.getElementById('doctorCard');
+            card.classList.remove('hidden');
+
+            document.getElementById('docPhoto').src = doc.photo;
+            document.getElementById('docName').textContent = doc.name;
+            document.getElementById('docSpecialty').textContent = doc.specialty;
+            document.getElementById('docLocation').querySelector('span').textContent = doc.location;
+            document.getElementById('docRating').textContent = doc.rating;
+            document.getElementById('docExp').textContent = doc.experience;
+            document.getElementById('docPatients').textContent = doc.patients;
+            document.getElementById('docRoom').textContent = doc.room;
+            document.getElementById('docPrice').textContent = doc.price;
+            document.getElementById('docBio').textContent = doc.bio;
+
+            // Enable time slots
+            document.getElementById('timeSlotsContainer').classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        // Show Empty State Card
+        function showEmptyState() {
+            currentDoctor = null;
+            document.getElementById('doctorCard').classList.add('hidden');
+            document.getElementById('emptyStateCard').classList.remove('hidden');
+            document.getElementById('timeSlotsContainer').classList.add('opacity-50', 'pointer-events-none');
+            updateSubmitButtonState();
+        }
+
+        // Select Time Slot button
+        function selectTime(timeStr, btn) {
+            document.querySelectorAll('.time-btn').forEach(b => {
+                b.classList.remove('active-time', 'bg-indigo-600', 'text-white', 'border-indigo-600', 'shadow-sm');
+                b.classList.add('bg-slate-50', 'text-slate-700', 'border-slate-200');
+            });
+
+            btn.classList.remove('bg-slate-50', 'text-slate-700', 'border-slate-200');
+            btn.classList.add('active-time', 'bg-indigo-600', 'text-white', 'border-indigo-600', 'shadow-sm');
+
+            document.getElementById('selectedTime').value = timeStr;
+            updateSubmitButtonState();
+        }
+
+        // Update Submit Button State
+        function updateSubmitButtonState() {
+            const submitBtn = document.getElementById('submitBtn');
+            const specVal = document.getElementById('specialtySelect').value;
+            const docVal = document.getElementById('doctorSelect').value;
+
+            if (specVal && docVal && currentDoctor) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+                submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('bg-slate-200', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+                submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+            }
+        }
+
+        // Reset Selection Form
+        function resetSelection() {
+            document.getElementById('specialtySelect').value = '';
+            onSpecialtyChange();
+        }
+
+        // Preset Shortcut function (Navigates to Booking view and preselects doctor)
+        function presetDoctor(specKey, docId) {
+            switchView('reservar');
+            const specSelect = document.getElementById('specialtySelect');
+            specSelect.value = specKey;
+            onSpecialtyChange();
+
+            const docSelect = document.getElementById('doctorSelect');
+            docSelect.value = docId;
+            onDoctorChange();
+        }
+
+        // Directory Search / Filter
+        function filterDirectory() {
+            const searchVal = document.getElementById('dirSearchInput').value.toLowerCase();
+            const specVal = document.getElementById('dirSpecFilter').value.toLowerCase();
+
+            document.querySelectorAll('.doc-dir-card').forEach(card => {
+                const name = card.getAttribute('data-name');
+                const spec = card.getAttribute('data-spec');
+
+                const matchesSearch = !searchVal || name.includes(searchVal) || spec.includes(searchVal);
+                const matchesSpec = !specVal || spec.includes(specVal);
+
+                if (matchesSearch && matchesSpec) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        // Handle Booking Form Submit
+        function handleBooking(e) {
+            e.preventDefault();
+            if (!currentDoctor) return;
+
+            const dateVal = document.getElementById('appointmentDate').value;
+            const timeVal = document.getElementById('selectedTime').value;
+
+            const modalSummary = document.getElementById('modalSummary');
+            modalSummary.innerHTML = `
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Médico:</span>
+                    <span class="font-bold text-slate-800">${currentDoctor.name}</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Especialidad:</span>
+                    <span class="font-semibold text-indigo-600">${currentDoctor.specialty}</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Fecha y Turno:</span>
+                    <span class="font-bold text-slate-800">${dateVal} @ ${timeVal}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Ubicación:</span>
+                    <span class="font-medium text-slate-700">${currentDoctor.room}</span>
+                </div>
+            `;
+
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeModalAndGoAppointments() {
+            document.getElementById('successModal').classList.add('hidden');
+            switchView('mis-citas');
+            showToast('Cita guardada en tu lista de Mis Citas');
+        }
+
+        // Toast Feedback helper
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = msg;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }, 3000);
+        }
+
+        // Mobile Sidebar toggle
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-ml-64');
+        });
+
+        // Initialize with default state
+        window.addEventListener('DOMContentLoaded', () => {
+            presetDoctor('pediatria', 'doc-1');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+{% comment %}
+Modal para agregar o editar franjas de atención. Lo controla doctor_schedule.html.
+Requiere en el contexto: day_choices [(code, label)] y duration_choices [int].
+{% endcomment %}
+<div id="scheduleModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+    <div class="modal-panel modal-panel-lg">
+        <button type="button" class="modal-close" data-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <h3 id="scheduleModalTitle" class="modal-title">Agregar horario</h3>
+        <p id="scheduleModalText" class="modal-text">Define los días, el rango de atención y la duración de cada turno.</p>
+
+        <form id="scheduleForm" class="space-y-4 mt-5" novalidate>
+            <input type="hidden" id="scheduleId" name="id" value="">
+
+            <!-- Días (agregar) -->
+            <div id="scheduleDaysGroup">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <span class="form-label mb-0">Días <span class="required">*</span></span>
+                    <span class="flex items-center gap-3">
+                        <button type="button" class="link-action" data-days="weekdays">Lun–Vie</button>
+                        <button type="button" class="link-action" data-days="all">Todos</button>
+                        <button type="button" class="link-action" data-days="none">Ninguno</button>
+                    </span>
+                </div>
+                <div class="chip-group">
+                    {% for code, label in day_choices %}
+                        <label class="check-chip">
+                            <input type="checkbox" name="days" value="{{ code }}" data-weekday="{% if code == 'saturday' or code == 'sunday' %}0{% else %}1{% endif %}">
+                            <span>{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Día fijo (editar) -->
+            <div id="scheduleDayFixed" hidden>
+                <span class="form-label">Día</span>
+                <span id="scheduleDayLabel" class="badge badge-info">--</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="scheduleStart" class="form-label">Hora inicio <span class="required">*</span></label>
+                    <input type="time" id="scheduleStart" name="start_time" class="form-control" step="300" value="08:00" required>
+                </div>
+                <div>
+                    <label for="scheduleEnd" class="form-label">Hora fin <span class="required">*</span></label>
+                    <input type="time" id="scheduleEnd" name="end_time" class="form-control" step="300" value="12:00" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="scheduleDuration" class="form-label">Duración del turno <span class="required">*</span></label>
+                    <div class="select-wrap">
+                        <select id="scheduleDuration" class="form-control">
+                            {% for minutes in duration_choices %}
+                                <option value="{{ minutes }}"{% if minutes == 30 %} selected{% endif %}>{{ minutes }} min</option>
+                            {% endfor %}
+                            <option value="other">Otra…</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                </div>
+                <div id="scheduleDurationOtherWrap" hidden>
+                    <label for="scheduleDurationOther" class="form-label">Minutos</label>
+                    <input type="number" id="scheduleDurationOther" class="form-control" min="5" max="480" step="1" placeholder="Ej.: 25">
+                </div>
+            </div>
+
+            <p id="schedulePreview" class="form-preview" aria-live="polite"></p>
+
+            <div id="scheduleAlert" class="form-alert" role="alert" hidden>
+                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                <span></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" data-modal-close>Cancelar</button>
+                <button type="submit" id="scheduleSubmit" class="btn btn-primary">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                    <span>Guardar horario</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

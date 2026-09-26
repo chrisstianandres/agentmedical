@@ -1,0 +1,76 @@
+{% comment %}
+Editor de medicamentos (receta) para "Resultado de la consulta". Lo controla MedicationEditor en panel.js.
+Parámetro: medications (iterable con name, dose, frequency, duration, route, instructions) para precargar.
+{% endcomment %}
+<div class="space-y-3">
+    <div class="flex items-center justify-between gap-3">
+        <span class="form-label mb-0">Medicamentos <span class="optional">(receta · máx. 30)</span></span>
+        <button type="button" id="medAddBtn" class="btn btn-soft btn-xs"><i class="fa-solid fa-plus"></i> Agregar medicamento</button>
+    </div>
+
+    <div id="medEditor" class="med-editor"></div>
+    <p id="medEmpty" class="med-empty">Sin medicamentos. Usa «Agregar medicamento» para prescribir.</p>
+</div>
+
+<script type="application/json" id="medicationsData">[{% for m in medications %}{"name": "{{ m.name|default_if_none:''|escapejs }}", "dose": "{{ m.dose|default_if_none:''|escapejs }}", "frequency": "{{ m.frequency|default_if_none:''|escapejs }}", "duration": "{{ m.duration|default_if_none:''|escapejs }}", "route": "{{ m.route|default_if_none:''|escapejs }}", "instructions": "{{ m.instructions|default_if_none:''|escapejs }}"}{% if not forloop.last %}, {% endif %}{% endfor %}]</script>
+
+<template id="medRowTemplate">
+    <div class="med-row">
+        <div class="med-col-name">
+            <label class="form-label">Medicamento <span class="required">*</span></label>
+            <input type="text" class="form-control" data-field="name" maxlength="150" placeholder="Ej.: Paracetamol">
+        </div>
+        <div class="med-col-dose">
+            <label class="form-label">Dosis <span class="required">*</span></label>
+            <input type="text" class="form-control" data-field="dose" maxlength="100" placeholder="Ej.: 500 mg">
+        </div>
+        <div class="med-col-frequency">
+            <label class="form-label">Frecuencia <span class="required">*</span></label>
+            <div class="select-wrap">
+                <select class="form-control" data-field="frequency_preset">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Cada 4 horas</option>
+                    <option>Cada 6 horas</option>
+                    <option>Cada 8 horas</option>
+                    <option>Cada 12 horas</option>
+                    <option>Una vez al día</option>
+                    <option>Antes de dormir</option>
+                    <option>Según necesidad</option>
+                    <option value="__other__">Otra…</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <input type="text" class="form-control med-other" data-field="frequency_other" maxlength="100" placeholder="Especifica la frecuencia" hidden>
+        </div>
+        <div class="med-col-duration">
+            <label class="form-label">Duración</label>
+            <input type="text" class="form-control" data-field="duration" maxlength="100" placeholder="Ej.: 5 días">
+        </div>
+        <div class="med-col-route">
+            <label class="form-label">Vía</label>
+            <div class="select-wrap">
+                <select class="form-control" data-field="route">
+                    <option value="">--</option>
+                    <option>Oral</option>
+                    <option>Sublingual</option>
+                    <option>Tópica</option>
+                    <option>Inhalada</option>
+                    <option>Oftálmica</option>
+                    <option>Ótica</option>
+                    <option>Intramuscular</option>
+                    <option>Intravenosa</option>
+                    <option>Subcutánea</option>
+                    <option>Otra</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+        </div>
+        <div class="med-col-instructions">
+            <label class="form-label">Indicaciones</label>
+            <input type="text" class="form-control" data-field="instructions" maxlength="255" placeholder="Ej.: Tomar después de las comidas">
+        </div>
+        <button type="button" class="icon-action icon-action-danger med-remove" data-med-remove title="Quitar medicamento" aria-label="Quitar medicamento">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>
+    </div>
+</template>

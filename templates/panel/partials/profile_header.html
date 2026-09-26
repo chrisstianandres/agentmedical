@@ -1,0 +1,35 @@
+{% comment %}
+Cabecera de perfil (portada + foto + nombre).
+Parámetros: photo, name, subtitle, location (opcional), photo_id (opcional),
+edit_url (opcional: enlace del botón "Editar Perfil") o edit_modal (opcional: id del modal que abre),
+specs (opcional: especialidades con .id/.title, se muestran como etiquetas),
+spec_ids (opcional: lista de ids en str; si se indica, solo se muestran esas especialidades).
+{% endcomment %}
+<div class="card">
+    <div class="profile-cover">
+        {% if edit_url %}
+            <a href="{{ edit_url }}" class="btn btn-glass btn-xs">
+                <i class="fa-solid fa-pen-to-square"></i> Editar Perfil
+            </a>
+        {% elif edit_modal %}
+            <button type="button" class="btn btn-glass btn-xs" onclick="openModal('{{ edit_modal }}')">
+                <i class="fa-solid fa-pen-to-square"></i> Editar Perfil
+            </button>
+        {% endif %}
+    </div>
+    <div class="px-6 pb-6 relative flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-12">
+        <img{% if photo_id %} id="{{ photo_id }}"{% endif %} src="{{ photo }}" alt="{{ name }}" class="avatar avatar-xl">
+        <div class="text-center sm:text-left mt-12">
+            <h1 class="text-xl font-bold text-slate-900">{{ name }}</h1>
+            {% if subtitle %}<p class="text-accent">{{ subtitle }}</p>{% endif %}
+            {% if specs %}
+                <div class="chip-group justify-center sm:justify-start mt-2">
+                    {% for sp in specs %}{% if not spec_ids or sp.id|stringformat:"s" in spec_ids %}<span class="badge badge-info">{{ sp.title }}</span>{% endif %}{% endfor %}
+                </div>
+            {% endif %}
+            {% if location %}
+                <p class="meta-list justify-center sm:justify-start"><span><i class="fa-solid fa-location-dot"></i>{{ location }}</span></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
