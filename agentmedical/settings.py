@@ -89,10 +89,11 @@ REDIS_HOST = 'localhost'
 REDIS_PASSWORD = ''
 REDIS_PORT = 6379
 REDIS_BD = 0
+REDIS_URL = 'redis://red-das285ojo6nc739tup0g:6379'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-         'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BD}',
+         'LOCATION': f'{REDIS_URL}',
     }
 }
 
