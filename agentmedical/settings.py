@@ -27,7 +27,7 @@ SITE_STORAGE = BASE_DIR
 SECRET_KEY = 'django-insecure-k4a$wwl&(cz(hdm_oca4(!c9479%*7ja+h&m9j6qodxdqwb&k_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "agentmedical.onrender.com",
