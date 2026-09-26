@@ -29,8 +29,11 @@ SECRET_KEY = 'django-insecure-k4a$wwl&(cz(hdm_oca4(!c9479%*7ja+h&m9j6qodxdqwb&k_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "agentmedical.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # Application definition
 
