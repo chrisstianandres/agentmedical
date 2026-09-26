@@ -48,8 +48,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.landingpage',
     'apps.medicalprofile',
-    'apps.appointment',
-    "django.contrib.staticfiles",
+    'apps.appointment'
 ]
 
 MIDDLEWARE = [
