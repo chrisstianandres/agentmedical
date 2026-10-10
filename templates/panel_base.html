@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Flatpickr (selector de fechas) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
     <!-- Estilos compartidos del panel -->
     <link rel="stylesheet" href="{% static 'panel/css/panel.css' %}">
 </head>
@@ -207,14 +207,22 @@
     </div>
 
     <!-- TOAST -->
-    <div id="toastNotification" class="toast" role="status" aria-live="polite">
-        <i id="toastIcon" class="toast-icon fa-solid fa-circle-check"></i>
+    <!-- El texto lo anuncian #srStatus/#srAlert (announce() en panel.js); el toast es solo visual -->
+    <div id="toastNotification" class="toast">
+        <i id="toastIcon" class="toast-icon fa-solid fa-circle-check" aria-hidden="true"></i>
         <span id="toastMsg">Notificación</span>
+        <button type="button" id="toastClose" class="toast-close" aria-label="Cerrar notificación">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
     </div>
 
+    <!-- Regiones vivas para lectores de pantalla -->
+    <div id="srStatus" class="sr-only" role="status" aria-live="polite"></div>
+    <div id="srAlert" class="sr-only" role="alert" aria-live="assertive"></div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js" integrity="sha384-j/aEP2b+3OKmGqank2qCSosSrlrF9jpIpdgApXq2ryJYBpLSbEi63/PDdL+rKmcQ" crossorigin="anonymous"></script>
     <script src="{% static 'panel/js/panel.js' %}"></script>
     {% block extra_script %}{% endblock %}
 </body>

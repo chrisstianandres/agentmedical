@@ -240,7 +240,7 @@ def admin_post(request, data, action):
                 raise NameError('El paciente no puede tener una cita consigo mismo como médico.')
             date = parse_date(request.POST.get('date'))
             time = parse_time(request.POST.get('time'))
-            schedule = dict(free_slots(doctor.id, date)).get(time)
+            schedule = dict(free_slots(doctor.id, date, for_update=True)).get(time)
             if not schedule:
                 raise NameError('El turno seleccionado no está disponible')
             appointment = Appointment(patient=patient, doctor=doctor, speciality=speciality, consultation_schedule=schedule,
@@ -272,7 +272,7 @@ def admin_post(request, data, action):
                 raise NameError('Solo se pueden reprogramar citas pendientes o confirmadas sin diagnóstico')
             date = parse_date(request.POST.get('date'))
             time = parse_time(request.POST.get('time'))
-            schedule = dict(free_slots(appointment.doctor_id, date, exclude_appointment_id=appointment.id)).get(time)
+            schedule = dict(free_slots(appointment.doctor_id, date, exclude_appointment_id=appointment.id, for_update=True)).get(time)
             if not schedule:
                 raise NameError('El turno seleccionado no está disponible')
             appointment.appointment_date = date

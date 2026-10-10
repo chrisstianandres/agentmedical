@@ -16,7 +16,7 @@
             <div class="lg:col-span-7 card card-body card-body-lg">
                 <div class="form-section-head">
                     <div class="flex items-center gap-2">
-                        <span class="step-badge">1</span>
+                        <span class="step-badge" aria-hidden="true"><i class="fa-solid fa-notes-medical"></i></span>
                         <h2 class="font-semibold text-slate-800 text-base">Datos de la Consulta</h2>
                     </div>
                     <span class="form-note">* Campos obligatorios</span>
@@ -28,7 +28,7 @@
                         <div>
                             <label for="specialtySelect" class="form-label">1. Especialidad Médica <span class="required">*</span></label>
                             <div class="select-wrap">
-                                <select id="specialtySelect" name="speciality" class="form-control">
+                                <select id="specialtySelect" name="speciality" class="form-control" aria-required="true" data-error-keys="especialidad">
                                     <option value="">-- Seleccionar Especialidad --</option>
                                     {% for s in specialities %}
                                         <option value="{{ s.id }}"{% if s.id|stringformat:"s" == preset_speciality %} selected{% endif %}>{{ s.title }}</option>
@@ -41,7 +41,7 @@
                         <div>
                             <label for="doctorSelect" class="form-label">2. Médico Especialista <span class="required">*</span></label>
                             <div class="select-wrap">
-                                <select id="doctorSelect" name="doctor" class="form-control" disabled>
+                                <select id="doctorSelect" name="doctor" class="form-control" aria-required="true" aria-describedby="doctorHint" data-error-keys="doctor,médico,consigo mismo" disabled>
                                     <option value="">-- Primero elija especialidad --</option>
                                 </select>
                                 <i class="fa-solid fa-chevron-down select-icon"></i>
@@ -56,7 +56,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                         <div>
                             <label for="appointmentDate" class="form-label">3. Fecha de la Cita <span class="required">*</span></label>
-                            <input type="text" id="appointmentDate" name="date" class="form-control" disabled placeholder="Selecciona un médico primero" autocomplete="off">
+                            <input type="text" id="appointmentDate" name="date" class="form-control" aria-required="true" aria-describedby="dateHint" disabled placeholder="Selecciona un médico primero" autocomplete="off">
                             <p id="dateHint" class="form-hint" hidden>
                                 <i class="fa-solid fa-circle-info"></i>
                                 <span></span>
@@ -64,8 +64,8 @@
                         </div>
 
                         <div>
-                            <span class="form-label">4. Turnos Disponibles <span class="required">*</span></span>
-                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar">
+                            <span id="slotsLabel" class="form-label">4. Turnos Disponibles <span class="required">*</span></span>
+                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar" role="radiogroup" aria-labelledby="slotsLabel" aria-required="true" tabindex="-1" data-error-keys="turno,hora,horario">
                                 <p class="slots-message"><i class="fa-solid fa-circle-info text-[10px]"></i> Selecciona una fecha para ver los turnos.</p>
                             </div>
                         </div>
@@ -78,9 +78,22 @@
                         <textarea id="reason" name="reason" rows="2" maxlength="500" class="form-control" placeholder="Describe brevemente el motivo de tu visita o síntomas..."></textarea>
                     </div>
 
+                    <!-- Revisión antes de confirmar. En móvil/tablet la tarjeta del médico queda debajo del botón,
+                         así que aquí también van consultorio y costo -->
+                    <section id="bookingSummary" class="summary-box booking-summary" aria-labelledby="bookingSummaryTitle" hidden>
+                        <h3 id="bookingSummaryTitle" class="booking-summary-title">Revisa tu cita antes de confirmar</h3>
+                        <div id="bookingSummaryRows" class="info-list"></div>
+                        <a href="#doctorCard" class="link-action">Ver perfil completo del médico</a>
+                    </section>
+
+                    <p id="bookingStatus" class="form-status">
+                        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                        <span>Falta elegir: especialidad, médico, fecha y turno.</span>
+                    </p>
+
                     <div class="form-actions">
                         <button type="button" id="resetBtn" class="btn btn-outline">Limpiar</button>
-                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                        <button type="submit" id="submitBtn" class="btn btn-primary" aria-describedby="bookingStatus">
                             <i class="fa-solid fa-calendar-check text-xs"></i>
                             <span>Confirmar Reserva de Cita</span>
                         </button>
@@ -89,7 +102,7 @@
             </div>
 
             <!-- Tarjeta del médico / estado vacío -->
-            <div class="lg:col-span-5">
+            <div class="lg:col-span-5 booking-aside">
                 {% include 'panel/partials/doctor_preview_card.html' %}
             </div>
         </div>
@@ -101,11 +114,77 @@
 {% block extra_script %}
     <script>
         (function () {
+            const form = document.getElementById('appointmentForm');
             const specSelect = document.getElementById('specialtySelect');
             const submitBtn = document.getElementById('submitBtn');
             const reason = document.getElementById('reason');
+            const status = document.getElementById('bookingStatus');
+            const FIELD_NAMES = {specialtySelect: 'especialidad', doctorSelect: 'médico', appointmentDate: 'fecha', timeSlotsContainer: 'turno'};
+            let attempted = false;      // tras el primer intento de envío los errores se actualizan en vivo
+            let serverError = null;     // {field, msg} del último rechazo del servidor
+            let booking = null;
 
-            const booking = DoctorPicker.create({
+            function listNames(names) {
+                return names.length > 1 ? names.slice(0, -1).join(', ') + ' y ' + names[names.length - 1] : names[0];
+            }
+
+            // Línea de estado junto al botón: qué falta para poder confirmar
+            function renderStatus(missing) {
+                const ready = !missing.length;
+                status.classList.toggle('is-ready', ready);
+                status.querySelector('i').className = 'fa-solid ' + (ready ? 'fa-circle-check' : 'fa-list-check');
+                status.querySelector('span').textContent = ready
+                    ? 'Todo listo: revisa los datos y confirma la reserva.'
+                    : 'Falta elegir: ' + listNames(missing.map(function (m) { return FIELD_NAMES[m[0]]; })) + '.';
+            }
+
+            function showErrors(missing) {
+                clearFieldErrors(form);
+                missing.forEach(function (m) {
+                    if (!serverError || m[0] !== serverError.field) markFieldError(form, m[0], m[1]);
+                });
+                if (serverError && serverError.field) markFieldError(form, serverError.field, serverError.msg);
+            }
+
+            // Resumen previo a confirmar con médico, fecha/turno, consultorio y costo (solo visible bajo lg)
+            function renderBookingSummary() {
+                const box = document.getElementById('bookingSummary');
+                const doc = booking.doctor();
+                box.hidden = !doc;
+                if (!doc) return;
+                const fp = document.getElementById('appointmentDate')._flatpickr;
+                const slot = document.querySelector('#timeSlotsContainer .time-btn.is-active');
+                const when = [fp && fp.altInput ? fp.altInput.value : '', slot ? slot.textContent : ''].filter(Boolean).join(' · ');
+                const has = function (v) { return v !== null && v !== undefined && v !== ''; };
+                const rows = [
+                    ['Médico:', doc.name_doctor, 'info-value-strong'],
+                    ['Fecha y turno:', when || 'Por elegir', when ? 'info-value-strong' : 'text-slate-500'],
+                    ['Consultorio:', doc.office || 'Por asignar', ''],
+                    ['Costo consulta:', has(doc.price) ? '$' + doc.price + ' USD' : '--', 'text-price']
+                ];
+                document.getElementById('bookingSummaryRows').innerHTML = rows.map(function (r) {
+                    return '<div class="info-row"><span class="info-label">' + r[0] + '</span>' +
+                        '<span class="info-value ' + r[2] + '">' + escapeHtml(r[1] || '--') + '</span></div>';
+                }).join('');
+            }
+
+            function refresh() {
+                if (!booking) return;
+                const missing = booking.missing();
+                renderStatus(missing);
+                renderBookingSummary();
+                if (attempted) showErrors(missing);
+            }
+
+            function focusField(id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (el.disabled) { specSelect.focus(); return; }
+                if (el._flatpickr && el._flatpickr.altInput) { el._flatpickr.altInput.focus(); return; }
+                (el.querySelector('.time-btn[tabindex="0"]') || el).focus();
+            }
+
+            booking = DoctorPicker.create({
                 specSelect: specSelect,
                 docSelect: document.getElementById('doctorSelect'),
                 docHint: document.getElementById('doctorHint'),
@@ -113,14 +192,17 @@
                 slotsBox: document.getElementById('timeSlotsContainer'),
                 dateHint: document.getElementById('dateHint'),
                 noPhoto: '{% static 'admin/assets/img/no-profile.png' %}',
-                onChange: function () { submitBtn.disabled = !booking.ready(); }
+                onChange: function () {
+                    serverError = null;
+                    refresh();
+                }
             });
 
             function renderSummary(data) {
                 const rows = [
                     ['Médico:', data.doctor, 'info-value-strong'],
                     ['Especialidad:', data.specialty, 'text-accent'],
-                    ['Fecha y Turno:', [data.date, data.time].filter(Boolean).join(' · '), 'info-value-strong'],
+                    ['Fecha y Turno:', [data.date_label || data.date, data.time_label || data.time].filter(Boolean).join(' · '), 'info-value-strong'],
                     ['Consultorio:', data.office || 'Por asignar', '']
                 ];
                 document.getElementById('modalSummary').innerHTML = rows.map(function (r) {
@@ -130,33 +212,51 @@
             }
 
             document.getElementById('resetBtn').addEventListener('click', function () {
+                const hasData = specSelect.value || reason.value.trim();
+                if (hasData && !window.confirm('¿Borrar la especialidad, el médico, la fecha y el turno elegidos?')) return;
+                attempted = false;
+                serverError = null;
+                clearFieldErrors(form);
                 reason.value = '';
                 booking.reset();
             });
 
-            document.getElementById('appointmentForm').addEventListener('submit', function (e) {
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                if (!booking.ready()) return;
+                const missing = booking.missing();
+                if (missing.length) {
+                    attempted = true;
+                    serverError = null;
+                    refresh();
+                    announce('No se puede confirmar todavía. ' + missing.map(function (m) { return m[1]; }).join(' '), true);
+                    focusField(missing[0][0]);
+                    return;
+                }
                 setButtonLoading(submitBtn, true, 'Reservando...');
                 postAction(Object.assign({action: 'addappointment', reason: reason.value}, booking.values()))
                     .done(function (response) {
                         if (response && response.result === 'ok') {
                             renderSummary(response.data || {});
                             openModal('successModal');
-                        } else {
-                            showToast((response && response.mensaje) || 'No se pudo reservar la cita.', 'error');
-                            booking.reloadSlots();   // el turno pudo haberse ocupado
+                            return;
                         }
+                        const msg = (response && response.mensaje) || 'No se pudo reservar la cita.';
+                        const field = markErrorFromMessage(form, msg);
+                        // Si el problema es el turno (o no se sabe), puede que otro paciente lo haya tomado: recargar
+                        if (!field || field.id === 'timeSlotsContainer') booking.reloadSlots();
+                        attempted = true;
+                        serverError = {field: field ? field.id : null, msg: msg};
+                        refresh();
+                        showToast(msg, 'error');
+                        if (field) focusField(field.id);
                     })
-                    .fail(function () { showToast('Error de conexión al reservar la cita.', 'error'); })
-                    .always(function () {
-                        setButtonLoading(submitBtn, false);
-                        submitBtn.disabled = !booking.ready();
-                    });
+                    .fail(function () { showToast('Error de conexión al reservar la cita. Revisa tu conexión e inténtalo de nuevo.', 'error'); })
+                    .always(function () { setButtonLoading(submitBtn, false); });
             });
 
             // Preselección en cadena (p. ej. desde el Directorio Médico)
             booking.preset(specSelect.value, '{{ preset_doctor|default_if_none:''|escapejs }}');
+            refresh();
         })();
     </script>
 {% endblock %}

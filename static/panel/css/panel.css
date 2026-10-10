@@ -400,15 +400,15 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
     pointer-events: none;
 }
 .form-hint {
-    font-size: 11px;
-    color: var(--amber-600);
+    font-size: 0.75rem;
+    color: var(--amber-700); /* 5:1 sobre blanco (amber-600 daba 3.2:1) */
     margin-top: 0.25rem;
     display: flex;
     align-items: center;
     gap: 0.25rem;
 }
-.form-hint > i { font-size: 10px; }
-.form-note { font-size: 0.75rem; color: var(--slate-400); }
+.form-hint > i { font-size: 11px; }
+.form-note { font-size: 0.75rem; color: var(--slate-500); /* 4.8:1 (slate-400 daba 2.6:1) */ }
 .form-section-head {
     display: flex;
     align-items: center;
@@ -612,16 +612,21 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
 .checklist-item > i { color: var(--emerald-500); }
 
 /* ---------- Turnos ---------- */
+/* En móvil la lista crece con la página (sin scroll anidado que oculte turnos);
+   desde sm se limita la altura y el contador .slots-message avisa cuántos hay */
 .slots-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.375rem;
-    max-height: 11rem;
-    overflow-y: auto;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    margin: -0.25rem;
+}
+@media (min-width: 640px) {
+    .slots-grid { max-height: 15rem; overflow-y: auto; }
 }
 .slots-message {
     grid-column: 1 / -1;
-    font-size: 11px;
+    font-size: 0.75rem;
     color: var(--slate-500);
     display: flex;
     align-items: center;
@@ -629,9 +634,11 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
     padding: 0.5rem 0;
 }
 .time-btn {
-    font-size: 0.75rem;
+    min-height: 2.75rem; /* área táctil mínima de 44px */
+    font-size: 0.8125rem;
     font-weight: 500;
     padding: 0.5rem 0.25rem;
+    cursor: pointer;
     border-radius: var(--radius-lg);
     border: 1px solid var(--slate-200);
     background: var(--slate-50);
@@ -640,6 +647,7 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
     transition: all 0.15s ease;
 }
 .time-btn:hover { border-color: var(--accent-500); }
+.time-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-500); }
 .time-btn.is-active {
     border-color: var(--accent-600);
     background: var(--accent-600);
@@ -726,15 +734,50 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
     align-items: center;
     gap: 0.5rem;
     opacity: 0;
+    visibility: hidden; /* oculto también para el teclado (botón cerrar) */
     pointer-events: none;
     transform: translateY(0.5rem);
     transition: all 0.2s ease;
 }
 @media (min-width: 640px) { .toast { left: auto; } }
-.toast.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
 .toast .toast-icon { color: var(--emerald-400); }
 .toast.toast-error { background: var(--rose-600); }
 .toast.toast-error .toast-icon { color: #fff; }
+.toast-close {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    color: inherit;
+    opacity: 0.8;
+    cursor: pointer;
+}
+.toast-close:hover { opacity: 1; background: rgb(255 255 255 / 0.15); }
+.toast-close:focus-visible { outline: none; opacity: 1; box-shadow: 0 0 0 2px #fff; }
+
+/* Grupo de turnos sin elegir (recibe foco programático al validar: el anillo rojo ya lo señala) */
+.slots-grid.is-invalid { border-radius: var(--radius-lg); box-shadow: 0 0 0 2px rgb(244 63 94 / 0.35); }
+.slots-grid:focus { outline: none; }
+
+/* Línea de estado junto al botón principal: qué falta para poder enviar */
+.form-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--slate-600);
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--slate-50);
+}
+.form-status > i { margin-top: 0.15rem; color: var(--slate-500); }
+.form-status.is-ready { background: var(--emerald-100); color: var(--emerald-700); }
+.form-status.is-ready > i { color: var(--emerald-600); }
 
 /* ---------- Perfil ---------- */
 .profile-cover {
@@ -1262,7 +1305,7 @@ input[type="file"].form-control { padding: 0.5rem; font-size: 0.75rem; }
 
 /* Errores por campo */
 .form-control.is-invalid { border-color: var(--rose-500); box-shadow: 0 0 0 2px rgb(244 63 94 / 0.2); }
-.field-error { display: block; font-size: 11px; color: var(--rose-600); margin-top: 0.25rem; }
+.field-error { display: block; font-size: 0.75rem; color: var(--rose-600); margin-top: 0.25rem; }
 
 /* Interruptor (checkbox) */
 .switch { display: inline-flex; align-items: center; gap: 0.625rem; cursor: pointer; font-size: 0.8125rem; color: var(--slate-700); }
@@ -1499,3 +1542,27 @@ body.is-forced .sidebar,
 body.is-forced #toggleSidebar,
 body.is-forced .topbar form,
 body.is-forced .profile-switch { display: none !important; }
+
+/* ---------- Reservar cita: resumen para revisar antes de confirmar ---------- */
+.booking-summary { margin-top: 0; }
+.booking-summary-title { font-size: 0.875rem; font-weight: 600; color: var(--slate-800); margin-bottom: 0.5rem; }
+.booking-summary .info-row { font-size: 0.8125rem; }
+.booking-summary .link-action { display: inline-block; margin-top: 0.75rem; }
+/* En escritorio la tarjeta del médico está al lado: el enlace a su perfil sobra */
+@media (min-width: 1024px) { .booking-summary .link-action { display: none; } }
+/* Bajo lg la columna lateral queda debajo del formulario: el estado vacío solo ocupa espacio */
+@media (max-width: 1023px) {
+    .booking-aside #emptyStateCard { display: none; }
+}
+
+/* ---------- Movimiento reducido ----------
+   Respeta la preferencia del sistema: sin fundidos, desplazamientos ni giros continuos
+   (los spinners quedan como icono estático; el texto "Cargando..." sigue indicando el estado). */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

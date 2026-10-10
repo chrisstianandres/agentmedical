@@ -116,15 +116,15 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label for="followupDate" class="form-label">Fecha <span class="required">*</span></label>
-                                <input type="text" id="followupDate" class="form-control" disabled placeholder="Cargando fechas..." autocomplete="off">
+                                <input type="text" id="followupDate" class="form-control" aria-required="true" aria-describedby="followupDateHint" disabled placeholder="Cargando fechas..." autocomplete="off">
                                 <p id="followupDateHint" class="form-hint" hidden>
                                     <i class="fa-solid fa-circle-info"></i>
                                     <span></span>
                                 </p>
                             </div>
                             <div>
-                                <span class="form-label">Turno <span class="required">*</span></span>
-                                <div id="followupSlots" class="slots-grid custom-scrollbar"></div>
+                                <span id="followupSlotsLabel" class="form-label">Turno <span class="required">*</span></span>
+                                <div id="followupSlots" class="slots-grid custom-scrollbar" role="radiogroup" aria-labelledby="followupSlotsLabel" aria-required="true"></div>
                             </div>
                         </div>
                         <div>

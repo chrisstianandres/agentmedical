@@ -50,19 +50,21 @@ class Appointment(ModeloBase):
     class Meta:
         verbose_name = "Cita"
         verbose_name_plural = "Citas"
+        # Un turno activo por doctor y por paciente; las citas canceladas liberan el turno
+        constraints = [
+            models.UniqueConstraint(fields=['doctor', 'appointment_date', 'appointment_time'],
+                                    condition=~models.Q(status='cancelada'), name='unique_active_doctor_slot',
+                                    violation_error_message="El turno seleccionado ya fue reservado por otro paciente."),
+            models.UniqueConstraint(fields=['patient', 'appointment_date', 'appointment_time'],
+                                    condition=~models.Q(status='cancelada'), name='unique_active_patient_slot',
+                                    violation_error_message="Ya tiene otra cita reservada en esa fecha y hora."),
+        ]
 
     def clean(self):
         # Verificar que la cita esté dentro de un horario disponible del doctor
         if not self.consultation_schedule_id:
             raise ValidationError("Debe seleccionar un horario de consulta válido.")
-        if self.status != self.STATUS_CANCELLED:
-            # Las citas canceladas liberan el turno
-            duplicates = Appointment.objects.filter(doctor_id=self.doctor_id, appointment_date=self.appointment_date,
-                                                    appointment_time=self.appointment_time).exclude(status=self.STATUS_CANCELLED)
-            if self.pk:
-                duplicates = duplicates.exclude(pk=self.pk)
-            if duplicates.exists():
-                raise ValidationError("La hora de la cita ya está reservada en otra cita del doctor.")
+        # Los turnos duplicados los validan las UniqueConstraint de Meta (full_clean → validate_constraints)
         if not (self.consultation_schedule.start_time <= self.appointment_time < self.consultation_schedule.end_time):
             raise ValidationError("La hora de la cita no está dentro del horario de consulta del doctor.")
 

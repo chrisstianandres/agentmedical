@@ -9,15 +9,15 @@
             <input type="hidden" id="rescheduleId" name="id" value="">
             <div>
                 <label for="rescheduleDate" class="form-label">Nueva Fecha <span class="required">*</span></label>
-                <input type="text" id="rescheduleDate" name="date" class="form-control" disabled placeholder="Cargando fechas..." autocomplete="off">
+                <input type="text" id="rescheduleDate" name="date" class="form-control" aria-required="true" aria-describedby="rescheduleDateHint" disabled placeholder="Cargando fechas..." autocomplete="off">
                 <p id="rescheduleDateHint" class="form-hint" hidden>
                     <i class="fa-solid fa-circle-info"></i>
                     <span></span>
                 </p>
             </div>
             <div>
-                <span class="form-label">Nuevo Turno <span class="required">*</span></span>
-                <div id="rescheduleSlots" class="slots-grid custom-scrollbar"></div>
+                <span id="rescheduleSlotsLabel" class="form-label">Nuevo Turno <span class="required">*</span></span>
+                <div id="rescheduleSlots" class="slots-grid custom-scrollbar" role="radiogroup" aria-labelledby="rescheduleSlotsLabel" aria-required="true"></div>
             </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" data-modal-close>Cancelar</button>

@@ -1,3 +1,5 @@
+import logging
+import re
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
@@ -5,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordChangeView
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -15,6 +17,9 @@ from django.utils.decorators import method_decorator
 from apps.appointment.functions import expire_appointments
 from apps.functions import add_data_session
 
+logger = logging.getLogger(__name__)
+# Texto de los NameError que lanza el propio Python (variable inexistente), distintos de los mensajes de negocio
+PYTHON_NAME_ERROR = re.compile(r"^(name|free variable) '[^']+' (is not defined|referenced before assignment)")
 
 # Create your views here.
 # -*- coding: UTF-8 -*-
@@ -462,6 +467,18 @@ def add_panel_data(request, data, action, title):
     return patient
 
 
+def user_error(ex, default):
+    """ Mensaje de error apto para el usuario. Los NameError lanzados a propósito y los ValidationError
+        son mensajes redactados para él; cualquier otra excepción (incluido un NameError real de Python,
+        "name 'x' is not defined") es un fallo interno: se registra con su traza y se responde con `default`. """
+    if isinstance(ex, NameError) and not PYTHON_NAME_ERROR.match(str(ex)):
+        return str(ex)
+    if isinstance(ex, ValidationError):
+        return ' '.join(ex.messages)
+    logger.exception(default)
+    return default
+
+
 def parse_date(value):
     try:
         return datetime.strptime(value or '', '%Y-%m-%d').date()
@@ -476,15 +493,29 @@ def parse_time(value):
         raise NameError('La hora debe tener el formato HH:MM')
 
 
+MONTH_LABELS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre',
+                'octubre', 'noviembre', 'diciembre']
+
+
+def date_label(value):
+    """ 'martes, 20 de octubre de 2026' (independiente del locale del servidor) """
+    weekday = WEEKDAY_LABELS[WEEKDAYS[value.weekday()]].lower()
+    return f"{weekday}, {value.day} de {MONTH_LABELS[value.month - 1]} de {value.year}"
+
+
 def time_label(value):
     hour = value.hour % 12 or 12
     return f"{hour:02d}:{value.minute:02d} {'AM' if value.hour < 12 else 'PM'}"
 
 
-def free_slots(doctor_id, date, exclude_appointment_id=None):
-    """ Turnos libres (time, ConsultationSchedule) del doctor en la fecha dada """
+def free_slots(doctor_id, date, exclude_appointment_id=None, for_update=False):
+    """ Turnos libres (time, ConsultationSchedule) del doctor en la fecha dada.
+        for_update=True bloquea la fila del doctor hasta el fin de la transacción para que dos reservas
+        simultáneas no tomen el mismo turno (usar justo antes de guardar una cita). """
     from apps.appointment.models import Appointment
-    from apps.medicalprofile.models import ConsultationSchedule
+    from apps.medicalprofile.models import ConsultationSchedule, ProfileMedical
+    if for_update:
+        list(ProfileMedical.objects.select_for_update().filter(id=doctor_id).values_list('id', flat=True))
     schedules = ConsultationSchedule.objects.filter(doctor_id=doctor_id, available_days=WEEKDAYS[date.weekday()]).order_by('start_time')
     busy = Appointment.objects.filter(doctor_id=doctor_id, appointment_date=date).exclude(status=Appointment.STATUS_CANCELLED)
     if exclude_appointment_id:
@@ -545,24 +576,30 @@ def view(request):
                     raise NameError('Debe elegir un doctor de la especialidad seleccionada')
                 if doctor.person_id == data['person'].id:
                     raise NameError('No puede reservar una cita consigo mismo.')
+                if not request.POST.get('date'):
+                    raise NameError('Elige una fecha para la cita.')
+                if not request.POST.get('time'):
+                    raise NameError('Elige un turno para la cita.')
                 date = parse_date(request.POST.get('date'))
                 time = parse_time(request.POST.get('time'))
-                schedule = dict(free_slots(doctor.id, date)).get(time)
+                schedule = dict(free_slots(doctor.id, date, for_update=True)).get(time)
                 if not schedule:
-                    raise NameError('El turno seleccionado no está disponible')
+                    raise NameError('El turno seleccionado ya no está disponible. Elige otro.')
                 patient = get_patient(data['person'], create=True, request=request)
                 appointment = Appointment(patient=patient, doctor=doctor, speciality=speciality, consultation_schedule=schedule,
                                           appointment_date=date, appointment_time=time, reason=request.POST.get('reason', '').strip() or None)
                 appointment.full_clean()
                 appointment.save(request)
                 return JsonResponse({"result": "ok", "data": {"doctor": doctor.person.full_name(), "specialty": speciality.title,
-                                                              "date": date.strftime('%Y-%m-%d'), "time": time.strftime('%H:%M'), "office": doctor.office}})
-            except ValidationError as ex:
+                                                              "date": date.strftime('%Y-%m-%d'), "time": time.strftime('%H:%M'), "office": doctor.office,
+                                                              "date_label": date_label(date), "time_label": time_label(time)}})
+            except IntegrityError:
+                # Carrera que pasó la validación (p. ej. el mismo paciente reservando dos turnos a la vez)
                 transaction.set_rollback(True)
-                return JsonResponse({"result": "bad", "mensaje": ' '.join(ex.messages)})
+                return JsonResponse({"result": "bad", "mensaje": "El turno seleccionado ya no está disponible. Elige otro."})
             except Exception as ex:
                 transaction.set_rollback(True)
-                return JsonResponse({"result": "bad", "mensaje": f"Error: {ex.__str__()}"})
+                return JsonResponse({"result": "bad", "mensaje": user_error(ex, "No se pudo reservar la cita. Inténtalo de nuevo en unos minutos.")})
 
         elif action == 'cancelappointment':
             try:
@@ -593,7 +630,7 @@ def view(request):
                     raise NameError('Solo se pueden reprogramar citas pendientes o confirmadas')
                 date = parse_date(request.POST.get('date'))
                 time = parse_time(request.POST.get('time'))
-                schedule = dict(free_slots(appointment.doctor_id, date, exclude_appointment_id=appointment.id)).get(time)
+                schedule = dict(free_slots(appointment.doctor_id, date, exclude_appointment_id=appointment.id, for_update=True)).get(time)
                 if not schedule:
                     raise NameError('El turno seleccionado no está disponible')
                 appointment.appointment_date = date
@@ -853,7 +890,7 @@ def view(request):
                 doctor, appointment = get_doctor_appointment(request, data, request.POST.get('id'))
                 date = parse_date(request.POST.get('date'))
                 time = parse_time(request.POST.get('time'))
-                schedule = dict(free_slots(doctor.id, date)).get(time)
+                schedule = dict(free_slots(doctor.id, date, for_update=True)).get(time)
                 if not schedule:
                     raise NameError('El turno seleccionado no está disponible')
                 followup = Appointment(patient=appointment.patient, doctor=doctor, speciality=appointment.speciality, consultation_schedule=schedule,
@@ -1113,7 +1150,7 @@ def view(request):
                     return JsonResponse({"results": results}, safe=False)
 
                 except Exception as ex:
-                    return JsonResponse({"results": [], 'message': f'{ex}'})
+                    return JsonResponse({"results": [], 'message': user_error(ex, 'No se pudieron cargar los médicos.')})
 
             elif action == 'getdoctorinfo':
                 try:
@@ -1136,7 +1173,7 @@ def view(request):
                     return JsonResponse({"data": results, 'display': True, 'message': 'ok'}, safe=False)
 
                 except Exception as ex:
-                    return JsonResponse({"data": [], 'display': False, 'message': f'{ex}'})
+                    return JsonResponse({"data": [], 'display': False, 'message': user_error(ex, 'No se pudo obtener la información del médico.')})
 
             elif action == 'getdatesavalies':
                 try:
@@ -1152,7 +1189,7 @@ def view(request):
                             available_dates.append(current_date.strftime('%Y-%m-%d'))
                     return JsonResponse({"data": available_dates, 'message': 'ok'}, safe=False)
                 except Exception as ex:
-                    return JsonResponse({"data": [], 'message': f'{ex}'})
+                    return JsonResponse({"data": [], 'message': user_error(ex, 'No se pudieron cargar las fechas disponibles.')})
 
             elif action == 'getslots':
                 try:
@@ -1163,7 +1200,7 @@ def view(request):
                     results = [{'time': slot.strftime('%H:%M'), 'label': time_label(slot)} for slot, schedule in free_slots(doctor_id, date)]
                     return JsonResponse({"data": results, 'message': 'ok'}, safe=False)
                 except Exception as ex:
-                    return JsonResponse({"data": [], 'message': f'{ex}'})
+                    return JsonResponse({"data": [], 'message': user_error(ex, 'No se pudieron cargar los turnos.')})
 
             return JsonResponse({"data": [], 'message': 'error'}, safe=False)
         else:

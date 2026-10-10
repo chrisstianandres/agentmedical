@@ -3,10 +3,33 @@
    JS común del panel (cargado desde panel_base.html, requiere jQuery).
    ===================================================================== */
 
+/* ---------- Avisos para lectores de pantalla ----------
+   Regiones vivas fijas de panel_base.html (#srStatus cortés, #srAlert urgente). Se vacían antes de
+   escribir para que un mismo mensaje repetido vuelva a anunciarse. */
+function announce(msg, urgent) {
+    const region = document.getElementById(urgent ? 'srAlert' : 'srStatus');
+    if (!region || !msg) return;
+    region.textContent = '';
+    setTimeout(function () { region.textContent = msg; }, 50);
+}
+
 /* ---------- Toast ---------- */
+const TOAST_MS = {success: 4000, error: 8000};
 let toastTimer = null;
 
-// type: 'success' (por defecto) | 'error'
+function hideToast() {
+    const toast = document.getElementById('toastNotification');
+    clearTimeout(toastTimer);
+    if (toast) toast.classList.remove('is-visible');
+}
+
+function scheduleToastHide(ms) {
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, ms);
+}
+
+// type: 'success' (por defecto) | 'error'. Los errores duran más, se anuncian como alerta
+// y no se cierran mientras el puntero o el foco están sobre el toast.
 function showToast(msg, type) {
     const toast = document.getElementById('toastNotification');
     if (!toast) return;
@@ -16,11 +39,29 @@ function showToast(msg, type) {
     const isError = type === 'error';
     toast.classList.toggle('toast-error', isError);
     icon.className = 'toast-icon fa-solid ' + (isError ? 'fa-circle-exclamation' : 'fa-circle-check');
+    toast.dataset.duration = isError ? TOAST_MS.error : TOAST_MS.success;
 
     toast.classList.add('is-visible');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toast.classList.remove('is-visible'); }, 3500);
+    announce(msg, isError);
+    scheduleToastHide(Number(toast.dataset.duration));
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const toast = document.getElementById('toastNotification');
+    if (!toast) return;
+    const pause = function () { clearTimeout(toastTimer); };
+    const resume = function () {
+        if (toast.classList.contains('is-visible') && !toast.matches(':hover, :focus-within')) {
+            scheduleToastHide(Number(toast.dataset.duration) || TOAST_MS.success);
+        }
+    };
+    toast.addEventListener('mouseenter', pause);
+    toast.addEventListener('focusin', pause);
+    toast.addEventListener('mouseleave', resume);
+    toast.addEventListener('focusout', resume);
+    const close = document.getElementById('toastClose');
+    if (close) close.addEventListener('click', hideToast);
+});
 
 /* ---------- Utilidades ---------- */
 // Escapa texto antes de inyectarlo como HTML
@@ -63,12 +104,11 @@ function postAction(data) {
 // Muestra u oculta un .form-hint con su texto (<span> interno)
 function setHint(el, msg) {
     if (!el) return;
-    if (msg) {
-        el.querySelector('span').textContent = msg;
-        el.hidden = false;
-    } else {
-        el.hidden = true;
-    }
+    // Se vacía al ocultar: los campos la referencian con aria-describedby y no deben leer un aviso viejo
+    el.querySelector('span').textContent = msg || '';
+    el.hidden = !msg;
+    // Aparecer de hidden a visible no se anuncia solo; los role="alert" ya se anuncian por sí mismos
+    if (msg && el.getAttribute('role') !== 'alert') announce(msg);
 }
 
 // Estado de "cargando" en un botón con <span> de texto
@@ -143,31 +183,106 @@ function bindPhotoPreview(input, img) {
     });
 }
 
-/* ---------- Modales (.modal-backdrop) ---------- */
-function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.add('is-open');
+/* ---------- Modales (.modal-backdrop) ----------
+   Al abrir: foco al primer control (o [data-autofocus]); Tab queda atrapado dentro.
+   Al cerrar: el foco vuelve al elemento que abrió el modal. */
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), ' +
+    'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusablesIn(el) {
+    return Array.prototype.filter.call(el.querySelectorAll(FOCUSABLE), function (n) {
+        return n.offsetParent !== null || n === document.activeElement;
+    });
 }
 
-function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('is-open');
+function topModal() {
+    const open = document.querySelectorAll('.modal-backdrop.is-open');
+    return open.length ? open[open.length - 1] : null;
 }
+
+function showModal(modal) {
+    if (!modal || modal.classList.contains('is-open')) return;
+    modal._returnFocus = document.activeElement;
+    modal.classList.add('is-open');
+    const panel = modal.querySelector('.modal-panel') || modal;
+    const target = panel.querySelector('[data-autofocus]') || focusablesIn(panel)[0] || panel;
+    if (target === panel) panel.tabIndex = -1;
+    target.focus();
+}
+
+function hideModal(modal) {
+    if (!modal || !modal.classList.contains('is-open')) return;
+    modal.classList.remove('is-open');
+    const back = modal._returnFocus;
+    modal._returnFocus = null;
+    if (back && document.contains(back) && typeof back.focus === 'function') back.focus();
+    // Si no se pudo volver (p. ej. el disparador se deshabilitó al enviar), no dejar el foco en el modal oculto
+    if (modal.contains(document.activeElement)) document.activeElement.blur();
+}
+
+function openModal(id) { showModal(document.getElementById(id)); }
+
+function closeModal(id) { hideModal(document.getElementById(id)); }
 
 document.addEventListener('click', function (e) {
     const closer = e.target.closest('[data-modal-close]');
     if (closer) {
-        closer.closest('.modal-backdrop').classList.remove('is-open');
+        hideModal(closer.closest('.modal-backdrop'));
     } else if (e.target.classList.contains('modal-backdrop') && e.target.dataset.dismissible !== 'false') {
-        e.target.classList.remove('is-open');
+        hideModal(e.target);
     }
 });
 
 document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape') return;
-    document.querySelectorAll('.modal-backdrop.is-open').forEach(function (m) {
-        if (m.dataset.dismissible !== 'false') m.classList.remove('is-open');
+    const modal = topModal();
+    if (!modal) return;
+    if (e.key === 'Escape') {
+        // Escape cierra primero un calendario abierto, no el modal que lo contiene
+        if (document.querySelector('.flatpickr-calendar.open')) return;
+        if (modal.dataset.dismissible !== 'false') hideModal(modal);
+    } else if (e.key === 'Tab') {
+        const items = focusablesIn(modal);
+        if (!items.length) { e.preventDefault(); return; }
+        const first = items[0], last = items[items.length - 1];
+        const inside = modal.contains(document.activeElement);
+        if (e.shiftKey && (document.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !inside)) { e.preventDefault(); first.focus(); }
+    }
+});
+
+/* ---------- Accesibilidad de flatpickr con altInput ----------
+   flatpickr oculta el input original (al que apunta <label for>) y muestra otro sin etiqueta.
+   Se le traslada el nombre accesible, las ayudas y la obligatoriedad, y se abre con el teclado. */
+function enhanceAltInput(fp) {
+    const input = fp && fp.input;
+    const alt = fp && fp.altInput;
+    if (!alt || !input.id) return fp;
+    const label = document.querySelector('label[for="' + CSS.escape(input.id) + '"]');
+    if (label) {
+        label.id = label.id || input.id + 'Label';
+        alt.setAttribute('aria-labelledby', label.id);
+    }
+    ['aria-describedby', 'aria-required'].forEach(function (attr) {
+        if (input.hasAttribute(attr)) alt.setAttribute(attr, input.getAttribute(attr));
     });
+    alt.setAttribute('aria-haspopup', 'dialog');
+    alt.addEventListener('keydown', function (e) {
+        if (fp.isOpen || ['Enter', ' ', 'ArrowDown'].indexOf(e.key) < 0) return;
+        e.preventDefault();
+        fp.open();
+        // Foco en el día elegido (o el primero habilitado) para navegar el calendario con flechas
+        const day = fp.calendarContainer.querySelector('.flatpickr-day.selected') ||
+            fp.calendarContainer.querySelector('.flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay)');
+        if (day) day.focus();
+    });
+    return fp;
+}
+
+// Clic en la etiqueta de un input con flatpickr: enfoca el campo visible
+document.addEventListener('click', function (e) {
+    const label = e.target.closest('label[for]');
+    const input = label && document.getElementById(label.htmlFor);
+    if (input && input._flatpickr && input._flatpickr.altInput) input._flatpickr.altInput.focus();
 });
 
 /* ---------- Selector de fecha (flatpickr) + turnos ----------
@@ -181,12 +296,20 @@ const SlotPicker = (function () {
         return $.getJSON('/panel', {action: 'getslots', doctor_id: doctorId, date: date});
     }
 
+    // Locale español con los meses en minúscula, como se escriben en español ("20 de octubre de 2026")
+    function spanishLocale() {
+        const es = window.flatpickr && flatpickr.l10ns && flatpickr.l10ns.es;
+        if (!es) return 'default';
+        const lower = function (list) { return list.map(function (m) { return m.toLowerCase(); }); };
+        return Object.assign({}, es, {months: {shorthand: lower(es.months.shorthand), longhand: lower(es.months.longhand)}});
+    }
+
     // Crea (o recrea) el flatpickr habilitando solo las fechas recibidas
     function initDatePicker(input, dates, onChange) {
         destroyDatePicker(input);
         input.disabled = false;
-        return flatpickr(input, {
-            locale: (window.flatpickr && flatpickr.l10ns && flatpickr.l10ns.es) ? 'es' : 'default',
+        return enhanceAltInput(flatpickr(input, {
+            locale: spanishLocale(),
             dateFormat: 'Y-m-d',
             altInput: true,
             altFormat: 'j \\d\\e F \\d\\e Y',
@@ -194,7 +317,7 @@ const SlotPicker = (function () {
             disableMobile: true,
             enable: dates,
             onChange: function (selected, dateStr) { onChange(dateStr); }
-        });
+        }));
     }
 
     function destroyDatePicker(input) {
@@ -203,6 +326,7 @@ const SlotPicker = (function () {
     }
 
     function renderMessage(container, msg, icon) {
+        container.onkeydown = null;
         container.innerHTML =
             '<p class="slots-message"><i class="fa-solid ' + (icon || 'fa-circle-info') + ' text-[10px]"></i>' +
             escapeHtml(msg) + '</p>';
@@ -212,22 +336,47 @@ const SlotPicker = (function () {
         renderMessage(container, 'Cargando turnos...', 'fa-spinner fa-spin');
     }
 
-    // Pinta los turnos como botones .time-btn; onSelect(time) al elegir uno
+    /* Pinta los turnos como botones .time-btn con semántica de radio (el contenedor es role="radiogroup");
+       onSelect(time) al elegir uno. Teclado: Tab entra al grupo, flechas/Inicio/Fin mueven y seleccionan. */
     function renderSlots(container, slots, onSelect) {
-        container.innerHTML = '';
-        slots.forEach(function (slot) {
+        container.innerHTML = '<p class="slots-message"><i class="fa-solid fa-clock text-[10px]"></i>' +
+            slots.length + (slots.length === 1 ? ' turno disponible' : ' turnos disponibles') + '</p>';
+        const buttons = slots.map(function (slot, i) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'time-btn';
             btn.dataset.time = slot.time;
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', 'false');
+            btn.tabIndex = i === 0 ? 0 : -1;
             btn.textContent = slot.label || slot.time;
-            btn.addEventListener('click', function () {
-                container.querySelectorAll('.time-btn').forEach(function (b) { b.classList.remove('is-active'); });
-                btn.classList.add('is-active');
-                onSelect(slot.time);
-            });
+            btn.addEventListener('click', function () { select(btn); });
             container.appendChild(btn);
+            return btn;
         });
+
+        function select(btn) {
+            buttons.forEach(function (b) {
+                const on = b === btn;
+                b.classList.toggle('is-active', on);
+                b.setAttribute('aria-checked', on ? 'true' : 'false');
+                b.tabIndex = on ? 0 : -1;
+            });
+            onSelect(btn.dataset.time);
+        }
+
+        // Propiedad (no addEventListener) para no acumular manejadores en cada repintado
+        container.onkeydown = function (e) {
+            const i = buttons.indexOf(e.target);
+            if (i < 0) return;
+            const last = buttons.length - 1;
+            const next = {ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: last}[e.key];
+            if (next === undefined) return;
+            e.preventDefault();
+            const target = buttons[next > last ? 0 : next < 0 ? last : next];
+            target.focus();
+            select(target);
+        };
     }
 
     /* Controlador completo fecha → turnos.
@@ -243,6 +392,7 @@ const SlotPicker = (function () {
 
         function resetSlots(msg) {
             slotsReq++;
+            opts.slotsBox.removeAttribute('aria-busy');
             state.time = '';
             renderMessage(opts.slotsBox, msg || 'Selecciona una fecha para ver los turnos.');
         }
@@ -266,22 +416,29 @@ const SlotPicker = (function () {
             if (!date || !doctorId) return;
             const token = slotsReq;
             renderLoading(opts.slotsBox);
+            opts.slotsBox.setAttribute('aria-busy', 'true');
             fetchSlots(doctorId, date)
                 .done(function (response) {
                     if (token !== slotsReq) return;
                     const slots = (response && response.data) || [];
                     if (!slots.length) {
                         renderMessage(opts.slotsBox, 'No hay turnos disponibles para esta fecha.', 'fa-calendar-xmark');
+                        announce('No hay turnos disponibles para esta fecha. Elige otra fecha.');
                         return;
                     }
                     renderSlots(opts.slotsBox, slots, function (time) {
                         state.time = time;
                         notify();
                     });
+                    announce(slots.length + (slots.length === 1 ? ' turno disponible.' : ' turnos disponibles.'));
                 })
                 .fail(function () {
                     if (token !== slotsReq) return;
                     renderMessage(opts.slotsBox, 'No se pudieron cargar los turnos.', 'fa-triangle-exclamation');
+                    announce('No se pudieron cargar los turnos.', true);
+                })
+                .always(function () {
+                    if (token === slotsReq) opts.slotsBox.removeAttribute('aria-busy');
                 });
         }
 
@@ -301,6 +458,7 @@ const SlotPicker = (function () {
                     }
                     opts.dateInput.placeholder = 'Selecciona una fecha';
                     initDatePicker(opts.dateInput, dates, loadSlots);
+                    announce(dates.length === 1 ? 'Hay 1 fecha disponible. Elige la fecha.' : 'Hay ' + dates.length + ' fechas disponibles. Elige una fecha.');
                 })
                 .fail(function () {
                     if (token !== datesReq) return;
@@ -436,7 +594,7 @@ function bindConfirmButtons() {
 /* ---------- Filtro de fecha libre (flatpickr) ---------- */
 function initDateFilter(input) {
     if (!input || !window.flatpickr) return null;
-    return flatpickr(input, {
+    return enhanceAltInput(flatpickr(input, {
         locale: (flatpickr.l10ns && flatpickr.l10ns.es) ? 'es' : 'default',
         dateFormat: 'Y-m-d',
         altInput: true,
@@ -444,7 +602,7 @@ function initDateFilter(input) {
         altInputClass: input.className,
         disableMobile: true,
         allowInput: false
-    });
+    }));
 }
 
 /* ---------- Editor de medicamentos (partial medication_editor.html) ----------
@@ -693,17 +851,31 @@ function isValidEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || '').trim());
 }
 
-function clearFieldErrors(form) {
-    form.querySelectorAll('.is-invalid').forEach(function (el) { el.classList.remove('is-invalid'); });
-    form.querySelectorAll('.field-error').forEach(function (el) { el.remove(); });
+// Añade o quita un id de la lista aria-describedby de `el`
+function toggleDescribedBy(el, id, on) {
+    const ids = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (x) { return x && x !== id; });
+    if (on) ids.push(id);
+    if (ids.length) el.setAttribute('aria-describedby', ids.join(' ')); else el.removeAttribute('aria-describedby');
 }
 
-// Marca el campo `name` del formulario con un mensaje debajo
+function clearFieldErrors(form) {
+    form.querySelectorAll('.is-invalid').forEach(function (el) {
+        el.classList.remove('is-invalid');
+        el.removeAttribute('aria-invalid');
+    });
+    form.querySelectorAll('.field-error').forEach(function (err) {
+        if (err.id) form.querySelectorAll('[aria-describedby~="' + err.id + '"]').forEach(function (el) { toggleDescribedBy(el, err.id, false); });
+        err.remove();
+    });
+}
+
+// Marca el campo `name` del formulario con un mensaje debajo (enlazado con aria-describedby)
 function markFieldError(form, name, msg) {
     const input = form.querySelector('[name="' + name + '"]') || form.querySelector('#' + CSS.escape(name));
     if (!input) return;
     const target = (input._flatpickr && input._flatpickr.altInput) || input;
     target.classList.add('is-invalid');
+    target.setAttribute('aria-invalid', 'true');
     if (input.type === 'checkbox' && input.name) {
         form.querySelectorAll('[name="' + input.name + '"]').forEach(function (el) { el.classList.add('is-invalid'); });
     }
@@ -712,14 +884,17 @@ function markFieldError(form, name, msg) {
         const holder = target.closest('.select-wrap') || target;
         const err = document.createElement('span');
         err.className = 'field-error';
+        err.id = (input.id || input.name) + 'Error';
         err.textContent = msg;
         holder.insertAdjacentElement('afterend', err);
+        toggleDescribedBy(target, err.id, true);
     }
 }
 
 // Marca el campo cuyo data-error-keys aparece antes en el mensaje del backend
-// (ante empate de posición gana la clave más larga: "correo institucional" > "correo")
-function markErrorFromMessage(form, msg) {
+// (ante empate de posición gana la clave más larga: "correo institucional" > "correo").
+// withText: además escribe el mensaje bajo el campo. Devuelve el elemento marcado o null.
+function markErrorFromMessage(form, msg, withText) {
     const text = String(msg || '').toLowerCase();
     let best = null;
     form.querySelectorAll('[data-error-keys]').forEach(function (el) {
@@ -733,8 +908,8 @@ function markErrorFromMessage(form, msg) {
             }
         });
     });
-    if (best) markFieldError(form, best.el.name || best.el.id);
-    return !!best;
+    if (best) markFieldError(form, best.el.name || best.el.id, withText ? msg : undefined);
+    return best ? best.el : null;
 }
 
 /* Formulario de sección con su propio botón Guardar.
@@ -747,8 +922,12 @@ function bindSectionForm(form, opts) {
             form.querySelectorAll('[name="' + e.target.name + '"].is-invalid').forEach(function (el) { el.classList.remove('is-invalid'); });
         } else if (e.target.classList.contains('is-invalid')) {
             e.target.classList.remove('is-invalid');
+            e.target.removeAttribute('aria-invalid');
             const next = (e.target.closest('.select-wrap') || e.target).nextElementSibling;
-            if (next && next.classList.contains('field-error')) next.remove();
+            if (next && next.classList.contains('field-error')) {
+                if (next.id) toggleDescribedBy(e.target, next.id, false);
+                next.remove();
+            }
         }
     });
     form.addEventListener('submit', function (e) {
@@ -862,13 +1041,14 @@ function bindRescheduleButtons() {
    Compartido por Reservar Cita (paciente) y Agendar cita (administrativo).
    Usa los ids del partial doctor_preview_card.html (emptyStateCard, loadingCard, doctorCard, doc*).
    opts: {specSelect, docSelect, docHint, dateInput, slotsBox, dateHint, noPhoto, onChange()}
-   Devuelve {ready(), values(), reset(), preset(specId, doctorId), reloadSlots()}. */
+   Devuelve {missing(), ready(), doctor(), values(), reset(), preset(specId, doctorId), reloadSlots()}. */
 const DoctorPicker = (function () {
     function create(opts) {
         const specSelect = opts.specSelect;
         const docSelect = opts.docSelect;
         let currentDoctor = null;
         let specReq = 0, doctorReq = 0;
+        let doctorsState = 'idle';   // idle | loading | empty | error | ready (lista de médicos de la especialidad)
 
         function notify() { if (opts.onChange) opts.onChange(); }
 
@@ -915,6 +1095,7 @@ const DoctorPicker = (function () {
             const token = ++specReq;
             docSelect.innerHTML = '<option value="">-- Seleccionar Médico --</option>';
             docSelect.disabled = true;
+            doctorsState = specSelect.value ? 'loading' : 'idle';
             showEmptyState();
             notify();
 
@@ -931,20 +1112,28 @@ const DoctorPicker = (function () {
                     const results = (response && response.results) || [];
                     docSelect.options[0].textContent = '-- Seleccionar Médico --';
                     if (!results.length) {
+                        doctorsState = 'empty';
                         setHint(opts.docHint, 'No hay médicos disponibles para esta especialidad.');
+                        notify();
                         return;
                     }
+                    doctorsState = 'ready';
                     results.forEach(function (item) { docSelect.appendChild(new Option(item.text, item.id)); });
                     docSelect.disabled = false;
                     if (presetDoctorId && results.some(function (r) { return String(r.id) === String(presetDoctorId); })) {
                         docSelect.value = String(presetDoctorId);
                         onDoctorChange();
+                    } else {
+                        announce(results.length === 1 ? '1 médico disponible. Elige el médico.' : results.length + ' médicos disponibles. Elige un médico.');
+                        notify();
                     }
                 })
                 .fail(function () {
                     if (token !== specReq) return;
+                    doctorsState = 'error';
                     docSelect.options[0].textContent = '-- Seleccionar Médico --';
                     setHint(opts.docHint, 'No se pudieron cargar los médicos.');
+                    notify();
                     showToast('No se pudieron cargar los médicos. Intenta nuevamente.', 'error');
                 });
         }
@@ -977,10 +1166,25 @@ const DoctorPicker = (function () {
         specSelect.addEventListener('change', function () { onSpecialtyChange(); });
         docSelect.addEventListener('change', onDoctorChange);
 
+        // Campos pendientes en orden del formulario: [[id del campo, mensaje], ...]
+        function missing() {
+            const list = [];
+            if (!specSelect.value) list.push([specSelect.id, 'Elige una especialidad.']);
+            if (!docSelect.value) list.push([docSelect.id, {
+                loading: 'Espera a que carguen los médicos.',
+                empty: 'No hay médicos disponibles en esta especialidad; elige otra.',
+                error: 'No se pudieron cargar los médicos; vuelve a elegir la especialidad.'
+            }[doctorsState] || 'Elige un médico.']);
+            else if (!currentDoctor) list.push([docSelect.id, 'Espera a que cargue la información del médico.']);
+            if (!picker.state.date) list.push([opts.dateInput.id, 'Elige una fecha.']);
+            if (!picker.state.time) list.push([opts.slotsBox.id, 'Elige un turno.']);
+            return list;
+        }
+
         return {
-            ready: function () {
-                return !!(specSelect.value && docSelect.value && currentDoctor && picker.state.date && picker.state.time);
-            },
+            missing: missing,
+            ready: function () { return !missing().length; },
+            doctor: function () { return currentDoctor; },
             values: function () {
                 return {speciality: specSelect.value, doctor: docSelect.value, date: picker.state.date, time: picker.state.time};
             },
@@ -1090,7 +1294,7 @@ function initBirthdateField(input, output) {
         output.classList.toggle('is-muted', age === null);
         output.innerHTML = age === null ? '' : '<i class="fa-solid fa-cake-candles"></i> ' + age + (age === 1 ? ' año' : ' años');
     }
-    flatpickr(input, {
+    enhanceAltInput(flatpickr(input, {
         locale: (flatpickr.l10ns && flatpickr.l10ns.es) ? 'es' : 'default',
         dateFormat: 'Y-m-d',
         altInput: true,
@@ -1099,7 +1303,7 @@ function initBirthdateField(input, output) {
         maxDate: 'today',
         disableMobile: true,
         onChange: updateAge
-    });
+    }));
     updateAge();
 }
 

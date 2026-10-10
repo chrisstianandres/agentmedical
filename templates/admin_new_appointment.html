@@ -77,15 +77,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="appointmentDate" class="form-label">Fecha <span class="required">*</span></label>
-                            <input type="text" id="appointmentDate" class="form-control" disabled placeholder="Selecciona un médico primero" autocomplete="off">
+                            <input type="text" id="appointmentDate" class="form-control" aria-required="true" aria-describedby="dateHint" disabled placeholder="Selecciona un médico primero" autocomplete="off">
                             <p id="dateHint" class="form-hint" hidden>
                                 <i class="fa-solid fa-circle-info"></i>
                                 <span></span>
                             </p>
                         </div>
                         <div>
-                            <span class="form-label">Turnos disponibles <span class="required">*</span></span>
-                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar">
+                            <span id="slotsLabel" class="form-label">Turnos disponibles <span class="required">*</span></span>
+                            <div id="timeSlotsContainer" class="slots-grid custom-scrollbar" role="radiogroup" aria-labelledby="slotsLabel" aria-required="true">
                                 <p class="slots-message"><i class="fa-solid fa-circle-info text-[10px]"></i> Selecciona una fecha para ver los turnos.</p>
                             </div>
                         </div>
