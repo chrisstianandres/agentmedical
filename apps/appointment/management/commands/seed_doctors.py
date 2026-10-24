@@ -332,17 +332,26 @@ class Command(BaseCommand):
                     ),
                 )
 
-            # Horarios: Sábado–Domingo 10:00–13:00
-            for day in ('saturday', 'sunday'):
-                ConsultationSchedule.objects.get_or_create(
-                    doctor=profile,
-                    available_days=day,
-                    defaults=dict(
-                        start_time=time(10, 0),
-                        end_time=time(13, 0),
-                        consultation_duration=timedelta(minutes=30),
-                    ),
-                )
+            # Horario: Sábado 10:00–18:00
+            ConsultationSchedule.objects.get_or_create(
+                doctor=profile,
+                available_days='saturday',
+                defaults=dict(
+                    start_time=time(10, 0),
+                    end_time=time(18, 0),
+                    consultation_duration=timedelta(minutes=30),
+                ),
+            )
+            # Horario: Domingo 10:00–13:00
+            ConsultationSchedule.objects.get_or_create(
+                doctor=profile,
+                available_days='sunday',
+                defaults=dict(
+                    start_time=time(10, 0),
+                    end_time=time(13, 0),
+                    consultation_duration=timedelta(minutes=30),
+                ),
+            )
 
             doctor_profiles.append(profile)
 
@@ -581,9 +590,11 @@ class Command(BaseCommand):
                 times = _build_times(schedule.start_time, schedule.end_time)
                 if not times:
                     continue
-                # 4–8 citas por doctor por día
-                n = random.randint(4, min(8, len(times)))
-                chosen_times = random.sample(times, n)
+                if current == today:
+                    chosen_times = times  # todos los turnos disponibles hoy
+                else:
+                    n = random.randint(4, min(8, len(times)))
+                    chosen_times = random.sample(times, n)
                 for t in chosen_times:
                     make_appointment(doctor, next_patient(), current, t, schedule, past=False)
             current += timedelta(days=1)
