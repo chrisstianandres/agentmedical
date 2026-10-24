@@ -125,8 +125,9 @@ class Command(BaseCommand):
         sys_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
         SYS_UID = sys_user.id if sys_user else None
 
-        today = date.today()
-        now = datetime.now()
+        now_aware = timezone.now()
+        now = timezone.localtime(now_aware).replace(tzinfo=None)  # hora local Ecuador, naive
+        today = now.date()
         day_name = DAY_MAP[today.weekday()]
         grace = timedelta(minutes=getattr(settings, 'APPOINTMENT_EXPIRE_GRACE_MINUTES', 120))
 

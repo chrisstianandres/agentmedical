@@ -2,13 +2,19 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db.models import Q
+from django.utils import timezone as dj_timezone
+
+
+def _local_now():
+    """Hora local según TIME_ZONE de Django, como datetime naive para comparar con campos naive de la BD."""
+    return dj_timezone.localtime(dj_timezone.now()).replace(tzinfo=None)
 
 
 def expire_appointments(now=None):
     """ Cancela las citas pendientes/confirmadas sin diagnóstico cuya hora de fin + margen ya pasó.
         Devuelve cuántas citas se cancelaron. """
     from apps.appointment.models import Appointment
-    now = now or datetime.now()
+    now = now or _local_now()
     grace = timedelta(minutes=getattr(settings, 'APPOINTMENT_EXPIRE_GRACE_MINUTES', 120))
     # En BD solo las candidatas (hasta hoy); la hora de fin se calcula en Python
     candidates = Appointment.objects.filter(appointment_date__lte=now.date(), status__in=Appointment.ACTIVE_STATUSES).filter(

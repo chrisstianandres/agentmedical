@@ -12,6 +12,7 @@ from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
+from django.utils import timezone as _dj_tz
 from django.utils.decorators import method_decorator
 
 from apps.appointment.functions import expire_appointments
@@ -343,7 +344,7 @@ def get_patient(person, create=False, request=None):
 def appointment_querysets(patient):
     """ Citas del paciente separadas en próximas, historial y canceladas """
     from apps.appointment.models import Appointment
-    today = datetime.now().date()
+    today = _dj_tz.localtime(_dj_tz.now()).date()
     base = Appointment.objects.filter(patient=patient) if patient else Appointment.objects.none()
     base = base.select_related('doctor__person', 'speciality').prefetch_related('medications')
     upcoming = base.filter(appointment_date__gte=today, status__in=Appointment.ACTIVE_STATUSES).order_by('appointment_date', 'appointment_time')
@@ -355,17 +356,26 @@ def appointment_querysets(patient):
 def doctor_appointment_querysets(doctor):
     """ Citas del doctor separadas en hoy, próximas, historial y canceladas """
     from apps.appointment.models import Appointment
-    today = datetime.now().date()
+    today = _dj_tz.localtime(_dj_tz.now()).date()
     base = Appointment.objects.filter(doctor=doctor) if doctor else Appointment.objects.none()
     return appointment_tab_querysets(base.select_related('patient__person', 'speciality').prefetch_related('medications'))
 
 
 def appointment_tab_querysets(base):
     """ Pestañas hoy / próximas / historial / canceladas sobre un queryset de citas """
+    from django.db.models import Case, IntegerField, Value, When
     from apps.appointment.models import Appointment
-    today = datetime.now().date()
+    from django.utils import timezone as dj_tz
+    today = dj_tz.localtime(dj_tz.now()).date()
+    # Pendientes y confirmadas primero, luego realizadas, ordenadas por hora dentro de cada grupo
+    status_order = Case(
+        When(status=Appointment.STATUS_PENDING, then=Value(0)),
+        When(status=Appointment.STATUS_CONFIRMED, then=Value(1)),
+        default=Value(2),
+        output_field=IntegerField(),
+    )
     return {
-        'today': base.filter(appointment_date=today).exclude(status=Appointment.STATUS_CANCELLED).order_by('appointment_time'),
+        'today': base.filter(appointment_date=today).exclude(status=Appointment.STATUS_CANCELLED).order_by(status_order, 'appointment_time'),
         'upcoming': base.filter(appointment_date__gt=today, status__in=Appointment.ACTIVE_STATUSES).order_by('appointment_date', 'appointment_time'),
         'history': base.filter(Q(status=Appointment.STATUS_DONE) | (Q(appointment_date__lt=today) & ~Q(status=Appointment.STATUS_CANCELLED))).order_by('-appointment_date', '-appointment_time'),
         'cancelled': base.filter(status=Appointment.STATUS_CANCELLED).order_by('-appointment_date', '-appointment_time'),
