@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 class ModeloBase(models.Model):
@@ -14,7 +13,7 @@ class ModeloBase(models.Model):
 
     def save(self, *args, **kwargs):
         usuario = None
-        fecha_modificacion = datetime.now()
+        fecha_modificacion = timezone.now()
         fecha_creacion = None
         update_fields = None
         if len(args):
