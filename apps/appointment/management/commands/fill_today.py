@@ -100,6 +100,11 @@ class Command(BaseCommand):
             default='15:00',
             help='Hora de inicio (HH:MM). Por defecto: 15:00',
         )
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            help='Elimina las citas de hoy desde --desde antes de recrearlas.',
+        )
 
     def handle(self, *args, **options):
         try:
@@ -109,14 +114,14 @@ class Command(BaseCommand):
             self.stderr.write('Formato de hora inválido. Usar HH:MM')
             return
 
-        created, skipped = self._fill(desde)
+        created, skipped = self._fill(desde, reset=options['reset'])
         self.stdout.write(self.style.SUCCESS(
             f'Listo: {created} citas creadas desde las {options["desde"]} para hoy ({date.today()}).'
             + (f' {skipped} doctores sin horario hoy.' if skipped else '')
         ))
 
     @transaction.atomic
-    def _fill(self, desde: time):
+    def _fill(self, desde: time, reset: bool = False):
         from apps.medicalprofile.models import ProfileMedical, ConsultationSchedule, SpecialtyProfile
         from apps.patientprofile.models import ProfilePatient
         from apps.appointment.models import Appointment
@@ -130,6 +135,14 @@ class Command(BaseCommand):
         today = now.date()
         day_name = DAY_MAP[today.weekday()]
         grace = timedelta(minutes=getattr(settings, 'APPOINTMENT_EXPIRE_GRACE_MINUTES', 120))
+
+        if reset:
+            from apps.appointment.models import Appointment as _Appt
+            deleted, _ = _Appt.objects.filter(
+                appointment_date=today,
+                appointment_time__gte=desde,
+            ).delete()
+
 
         doctors = list(ProfileMedical.objects.filter(status=True))
         patients = list(ProfilePatient.objects.filter(status=True))
