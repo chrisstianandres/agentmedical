@@ -32,7 +32,8 @@ WEEKDAY_LABELS = {'monday': 'Lunes', 'tuesday': 'Martes', 'wednesday': 'Miércol
 DURATION_CHOICES = [15, 20, 30, 45, 60]
 DOCTOR_ACTIONS = ('doctorprofile', 'savedoctorprofile', 'doctorschedule', 'addschedule', 'editschedule', 'deleteschedule',
                   'doctorappointments', 'doctorappointmentdetail', 'confirmappointment', 'saveresult', 'followupappointment',
-                  'doctorcancelappointment')
+                  'doctorcancelappointment', 'searchcie10')
+DOCTOR_JSON_GET_ACTIONS = ('searchcie10',)
 PATIENT_ACTIONS = ('appointment', 'myappointments', 'directory', 'profile', 'editprofile', 'addappointment',
                    'cancelappointment', 'rescheduleappointment', 'profileedit', 'savepersonal', 'savecontact',
                    'savemedical', 'savealergies')
@@ -884,26 +885,67 @@ def view(request):
 
         elif action == 'saveresult':
             try:
+                import json as _json
                 from django.utils import timezone
+                from apps.appointment.models import Appointment as _Appt, PrescribedMedication, AppointmentDiagnosis, Cie10Code
                 doctor, appointment = get_doctor_appointment(request, data, request.POST.get('id'))
                 if not can_record_result(appointment):
                     raise NameError('Solo se puede registrar el resultado de citas no canceladas de hoy o anteriores')
-                diagnosis = request.POST.get('diagnosis', '').strip()
-                if not diagnosis:
-                    raise NameError('Debe ingresar el diagnóstico')
-                # Sin el campo 'medications' en el POST se conservan las prescripciones existentes
-                medications = parse_medications(request.POST['medications']) if 'medications' in request.POST else None
-                appointment.diagnosis = diagnosis
-                appointment.indications = request.POST.get('indications', '').strip() or None
+
+                # ── Tipo de consulta ──────────────────────────────────────
+                consultation_type = request.POST.get('consultation_type', _Appt.TYPE_EXTERNA)
+                if consultation_type not in (_Appt.TYPE_EXTERNA, _Appt.TYPE_HOSPITALIZACION):
+                    consultation_type = _Appt.TYPE_EXTERNA
+                appointment.consultation_type = consultation_type
+
+                # ── Campos clínicos compartidos ───────────────────────────
+                appointment.reason       = request.POST.get('reason', '').strip() or None
+                appointment.diagnosis    = request.POST.get('diagnosis', '').strip() or None
+                appointment.indications  = request.POST.get('indications', '').strip() or None
+                appointment.laboratory   = request.POST.get('laboratory', '').strip() or None
+
+                # ── Campos exclusivos por tipo ────────────────────────────
+                if consultation_type == _Appt.TYPE_EXTERNA:
+                    appointment.current_illness = request.POST.get('current_illness', '').strip() or None
+                    appointment.physical_exam   = request.POST.get('physical_exam', '').strip() or None
+                    appointment.evolution       = None
+                else:
+                    appointment.evolution       = request.POST.get('evolution', '').strip() or None
+                    appointment.current_illness = None
+                    appointment.physical_exam   = None
+
                 appointment.status = appointment.STATUS_DONE
                 if not appointment.attended_at:
                     appointment.attended_at = timezone.now()
                 appointment.save(request)
+
+                # ── Medicamentos ──────────────────────────────────────────
+                medications = parse_medications(request.POST['medications']) if 'medications' in request.POST else None
                 if medications is not None:
-                    from apps.appointment.models import PrescribedMedication
                     appointment.medications.all().delete()
                     for index, item in enumerate(medications):
                         PrescribedMedication(appointment=appointment, order=index, **item).save(request)
+
+                # ── Diagnósticos CIE-10 ───────────────────────────────────
+                if 'cie10_codes' in request.POST:
+                    raw = request.POST.get('cie10_codes', '[]')
+                    try:
+                        entries = _json.loads(raw)  # [{id, is_primary, notes}]
+                    except Exception:
+                        entries = []
+                    appointment.cie10_diagnoses.all().delete()
+                    for entry in entries:
+                        try:
+                            cie10 = Cie10Code.objects.get(id=int(entry['id']))
+                            AppointmentDiagnosis(
+                                appointment=appointment,
+                                cie10=cie10,
+                                is_primary=bool(entry.get('is_primary', False)),
+                                notes=str(entry.get('notes', ''))[:255],
+                            ).save(request)
+                        except (Cie10Code.DoesNotExist, KeyError, ValueError):
+                            pass
+
                 return JsonResponse({"result": "ok", "mensaje": "Resultado de la cita guardado correctamente"})
             except Exception as ex:
                 transaction.set_rollback(True)
@@ -968,8 +1010,8 @@ def view(request):
             elif required and active != required:
                 message = f'Cambie al perfil {PROFILE_LABELS[required]} para usar esta opción.'
             if message:
-                if action in ADMIN_JSON_GET_ACTIONS:
-                    return JsonResponse({"results": [], "message": message})
+                if action in ADMIN_JSON_GET_ACTIONS or action in DOCTOR_JSON_GET_ACTIONS:
+                    return JsonResponse({"result": "bad", "mensaje": message})
                 return HttpResponseRedirect(f"{PROFILE_HOME[active]}&info={quote(message)}")
             if required == 'admin':
                 from apps.core.admin_panel import admin_get
@@ -1016,6 +1058,7 @@ def view(request):
                     data['history'] = Appointment.objects.filter(patient=appointment.patient, doctor=doctor).exclude(id=appointment.id).select_related(
                         'speciality').prefetch_related('medications').order_by('-appointment_date', '-appointment_time')
                     data['medications'] = appointment.medications.all()
+                    data['cie10_diagnoses'] = appointment.cie10_diagnoses.select_related('cie10').all()
                     data['can_record_result'] = can_record_result(appointment)
                     data['can_confirm'] = appointment.status == appointment.STATUS_PENDING
                     # Hora local del servidor, igual que expire_appointments (TIME_ZONE='UTC' desfasa {% now %})
@@ -1024,6 +1067,17 @@ def view(request):
                     return render(request, "doctor_appointment_detail.html", data)
                 except Exception as ex:
                     return HttpResponseRedirect(f"/panel?action=doctorappointments&info={quote(ex.__str__())}")
+
+            elif action == 'searchcie10':
+                from apps.appointment.models import Cie10Code
+                q = request.GET.get('q', '').strip()
+                results = []
+                if q:
+                    qs = Cie10Code.objects.filter(
+                        Q(code__icontains=q) | Q(description__icontains=q)
+                    ).order_by('code')[:20]
+                    results = [{'id': c.id, 'code': c.code, 'description': c.description} for c in qs]
+                return JsonResponse({'result': 'ok', 'data': results})
 
             elif action == 'doctorprofile':
                 # Inicio de los médicos sin perfil: sin redirect en error para no entrar en bucle

@@ -24,7 +24,6 @@
                         <div class="info-row"><span class="info-label">Fecha:</span><span class="info-value">{{ appointment.appointment_date|date:"d/m/Y" }}</span></div>
                         <div class="info-row"><span class="info-label">Hora:</span><span class="info-value">{{ appointment.appointment_time|time:"h:i A" }}</span></div>
                         <div class="info-row"><span class="info-label">Especialidad:</span><span class="info-value">{{ appointment.speciality.title|default:"Consulta general" }}</span></div>
-                        <div class="info-row items-start"><span class="info-label">Motivo:</span><span class="info-value">{{ appointment.reason|default:"No indicado" }}</span></div>
                         {% if appointment.attended_at %}
                             <div class="info-row"><span class="info-label">Atendida:</span><span class="info-value">{{ appointment.attended_at|date:"d/m/Y H:i" }}</span></div>
                         {% endif %}
@@ -82,30 +81,189 @@
             <div class="lg:col-span-2 space-y-6">
                 <div class="card card-body card-body-lg">
                     <h2 class="card-title"><i class="fa-solid fa-file-medical"></i> Resultado de la consulta</h2>
+
                     {% if can_record_result %}
-                        <form id="resultForm" class="space-y-4" novalidate>
+                        <form id="resultForm" class="space-y-5" novalidate>
+
+                            <!-- Tipo de consulta -->
                             <div>
-                                <label for="diagnosis" class="form-label">Diagnóstico <span class="required">*</span></label>
-                                <textarea id="diagnosis" name="diagnosis" rows="4" maxlength="4000" class="form-control" placeholder="Describe el diagnóstico de la consulta..." required>{{ appointment.diagnosis|default:'' }}</textarea>
+                                <p class="form-label mb-2">Tipo de consulta</p>
+                                <div class="consult-type-toggle" role="group" aria-label="Tipo de consulta">
+                                    <label class="consult-type-opt">
+                                        <input type="radio" name="consultation_type" value="externa" {% if appointment.consultation_type != 'hospitalizacion' %}checked{% endif %}>
+                                        <span><i class="fa-solid fa-stethoscope"></i> Consulta externa</span>
+                                    </label>
+                                    <label class="consult-type-opt">
+                                        <input type="radio" name="consultation_type" value="hospitalizacion" {% if appointment.consultation_type == 'hospitalizacion' %}checked{% endif %}>
+                                        <span><i class="fa-solid fa-bed-pulse"></i> Hospitalización</span>
+                                    </label>
+                                </div>
                             </div>
+
+                            <!-- Motivo de la consulta (motivo se usa en ambos pero con label diferente) -->
+                            <div>
+                                <label for="reason" class="form-label">Motivo de la consulta <span class="optional">(Opcional)</span></label>
+                                <textarea id="reason" name="reason" rows="2" maxlength="1000" class="form-control" placeholder="¿Por qué consulta hoy el paciente?">{{ appointment.reason|default:'' }}</textarea>
+                            </div>
+
+                            <!-- ── CONSULTA EXTERNA ── -->
+                            <div id="secExterna" class="space-y-4">
+                                <div>
+                                    <label for="current_illness" class="form-label">Enfermedad actual <span class="optional">(Opcional)</span></label>
+                                    <textarea id="current_illness" name="current_illness" rows="3" maxlength="4000" class="form-control"
+                                              placeholder="Descripción de la evolución de la enfermedad actual...">{{ appointment.current_illness|default:'' }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="physical_exam" class="form-label">Examen físico <span class="optional">(Opcional)</span></label>
+                                    <textarea id="physical_exam" name="physical_exam" rows="3" maxlength="4000" class="form-control"
+                                              placeholder="Hallazgos del examen físico...">{{ appointment.physical_exam|default:'' }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- ── HOSPITALIZACIÓN ── -->
+                            <div id="secHospitalizacion" class="space-y-4" hidden>
+                                <div>
+                                    <label for="diagnosis" class="form-label">Diagnóstico <span class="optional">(Opcional)</span></label>
+                                    <textarea id="diagnosis" name="diagnosis" rows="3" maxlength="4000" class="form-control"
+                                              placeholder="Diagnóstico de ingreso, evolución clínica...">{{ appointment.diagnosis|default:'' }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="evolution" class="form-label">Evolución <span class="optional">(Opcional)</span></label>
+                                    <textarea id="evolution" name="evolution" rows="3" maxlength="4000" class="form-control"
+                                              placeholder="Evolución del paciente durante la hospitalización...">{{ appointment.evolution|default:'' }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- ── CIE-10 (ambos tipos) ── -->
+                            <div>
+                                <p class="form-label mb-2">Diagnósticos CIE-10 <span class="optional">(Opcional)</span></p>
+                                <div class="cie10-widget">
+                                    <div class="cie10-search-wrap">
+                                        <i class="fa-solid fa-magnifying-glass cie10-search-icon"></i>
+                                        <input type="text" id="cie10Input" class="cie10-search-input"
+                                               placeholder="Buscar por código o descripción (ej: J45, hipertensión)..."
+                                               autocomplete="off" spellcheck="false">
+                                        <div id="cie10Dropdown" class="cie10-dropdown" hidden></div>
+                                    </div>
+                                    <div id="cie10Tags" class="cie10-tags">
+                                        <!-- chips renderizados por JS -->
+                                    </div>
+                                    <input type="hidden" id="cie10CodesInput" name="cie10_codes" value="[]">
+                                </div>
+                                <p class="form-hint mt-1"><i class="fa-solid fa-circle-info"></i> El primero agregado se marca como diagnóstico principal. Haz clic en <strong>P</strong> / <strong>S</strong> para cambiarlo.</p>
+                            </div>
+
+                            <!-- Laboratorios/Imágenes (ambos) -->
+                            <div>
+                                <label for="laboratory" class="form-label">Laboratorios e Imágenes <span class="optional">(Opcional)</span></label>
+                                <textarea id="laboratory" name="laboratory" rows="2" maxlength="2000" class="form-control"
+                                          placeholder="Exámenes de laboratorio, imágenes o estudios indicados...">{{ appointment.laboratory|default:'' }}</textarea>
+                            </div>
+
+                            <!-- Indicaciones (ambos) -->
                             <div>
                                 <label for="indications" class="form-label">Indicaciones <span class="optional">(Opcional)</span></label>
-                                <textarea id="indications" name="indications" rows="3" maxlength="4000" class="form-control" placeholder="Reposo, dieta, controles, recomendaciones...">{{ appointment.indications|default:'' }}</textarea>
+                                <textarea id="indications" name="indications" rows="3" maxlength="4000" class="form-control"
+                                          placeholder="Medicación, reposo, dieta, controles, recomendaciones...">{{ appointment.indications|default:'' }}</textarea>
                             </div>
+
                             {% include 'panel/partials/medication_editor.html' with medications=medications %}
+
                             <div class="flex justify-end">
                                 <button type="submit" id="resultSubmit" class="btn btn-primary">
                                     <i class="fa-solid fa-floppy-disk text-xs"></i>
-                                    <span>{% if appointment.diagnosis %}Actualizar resultado{% else %}Guardar resultado{% endif %}</span>
+                                    <span>{% if appointment.diagnosis or appointment.cie10_diagnoses.exists %}Actualizar resultado{% else %}Guardar resultado{% endif %}</span>
                                 </button>
                             </div>
                         </form>
+
                     {% elif appointment.status == 'cancelada' %}
                         <div class="notice notice-danger"><i class="fa-solid fa-ban"></i><span>Cita cancelada: no se puede registrar un resultado.</span></div>
-                    {% elif appointment.diagnosis %}
-                        {% include 'panel/partials/consultation_result.html' with diagnosis=appointment.diagnosis indications=appointment.indications meds=medications open=True %}
+
                     {% else %}
-                        <div class="notice"><i class="fa-solid fa-clock"></i><span>La cita aún no ocurre: podrás registrar el resultado a partir de la hora del turno.</span></div>
+                        <!-- Vista de solo lectura del resultado guardado -->
+                        <div class="consult-result-readonly">
+                            {% if appointment.consultation_type == 'hospitalizacion' %}
+                                <div class="consult-type-badge consult-type-hospitalizacion">
+                                    <i class="fa-solid fa-bed-pulse"></i> Hospitalización / Internación
+                                </div>
+                            {% else %}
+                                <div class="consult-type-badge consult-type-externa">
+                                    <i class="fa-solid fa-stethoscope"></i> Consulta externa
+                                </div>
+                            {% endif %}
+
+                            {% if appointment.reason %}
+                                <div class="result-section">
+                                    <div class="result-label">Motivo de la consulta</div>
+                                    <p class="result-text">{{ appointment.reason }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% if appointment.consultation_type != 'hospitalizacion' %}
+                                {% if appointment.current_illness %}
+                                    <div class="result-section">
+                                        <div class="result-label">Enfermedad actual</div>
+                                        <p class="result-text">{{ appointment.current_illness }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if appointment.physical_exam %}
+                                    <div class="result-section">
+                                        <div class="result-label">Examen físico</div>
+                                        <p class="result-text">{{ appointment.physical_exam }}</p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                {% if appointment.diagnosis %}
+                                    <div class="result-section">
+                                        <div class="result-label">Diagnóstico</div>
+                                        <p class="result-text">{{ appointment.diagnosis }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if appointment.evolution %}
+                                    <div class="result-section">
+                                        <div class="result-label">Evolución</div>
+                                        <p class="result-text">{{ appointment.evolution }}</p>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+
+                            {% if cie10_diagnoses %}
+                                <div class="result-section">
+                                    <div class="result-label">Diagnósticos CIE-10</div>
+                                    <div class="cie10-read-list">
+                                        {% for d in cie10_diagnoses %}
+                                            <div class="cie10-read-item {% if d.is_primary %}cie10-primary{% endif %}">
+                                                <span class="cie10-read-badge">{% if d.is_primary %}P{% else %}S{% endif %}</span>
+                                                <span class="cie10-read-code">{{ d.cie10.code }}</span>
+                                                <span class="cie10-read-desc">{{ d.cie10.description }}</span>
+                                                {% if d.notes %}<span class="cie10-read-notes">— {{ d.notes }}</span>{% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if appointment.laboratory %}
+                                <div class="result-section">
+                                    <div class="result-label">Laboratorios e Imágenes</div>
+                                    <p class="result-text">{{ appointment.laboratory }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% if appointment.indications %}
+                                <div class="result-section">
+                                    <div class="result-label">Indicaciones</div>
+                                    <p class="result-text">{{ appointment.indications }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% include 'panel/partials/medication_list.html' with meds=medications title="Receta médica" %}
+                        </div>
+
+                        {% if appointment.status != 'cancelada' %}
+                            <div class="notice mt-4"><i class="fa-solid fa-clock"></i><span>La cita aún no ocurre: podrás registrar el resultado a partir de la hora del turno.</span></div>
+                        {% endif %}
                     {% endif %}
                 </div>
 
@@ -172,6 +330,257 @@
         </div>
     </section>
 
+    <!-- CIE-10 preload (diagnósticos guardados) -->
+    <script id="cie10InitialData" type="application/json">
+        [{% for d in cie10_diagnoses %}{"id":{{ d.cie10.id }},"code":"{{ d.cie10.code|escapejs }}","description":"{{ d.cie10.description|escapejs }}","is_primary":{% if d.is_primary %}true{% else %}false{% endif %},"notes":"{{ d.notes|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+    </script>
+
+    <style>
+        /* ── Tipo de consulta toggle ─────────────────────────────────────── */
+        .consult-type-toggle {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+        .consult-type-opt {
+            cursor: pointer;
+        }
+        .consult-type-opt input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .consult-type-opt span {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .45rem 1rem;
+            border-radius: 9999px;
+            border: 1.5px solid var(--border-color, #e2e8f0);
+            background: transparent;
+            font-size: .8125rem;
+            font-weight: 500;
+            color: var(--text-secondary, #64748b);
+            transition: border-color .15s, background .15s, color .15s;
+            user-select: none;
+        }
+        .consult-type-opt input:checked + span {
+            border-color: var(--primary, #0891b2);
+            background: color-mix(in srgb, var(--primary, #0891b2) 10%, transparent);
+            color: var(--primary, #0891b2);
+        }
+
+        /* ── CIE-10 widget ───────────────────────────────────────────────── */
+        .cie10-widget {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+        .cie10-search-wrap {
+            position: relative;
+        }
+        .cie10-search-icon {
+            position: absolute;
+            left: .75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary, #94a3b8);
+            font-size: .8rem;
+            pointer-events: none;
+        }
+        .cie10-search-input {
+            width: 100%;
+            padding: .5rem .75rem .5rem 2.1rem;
+            border: 1.5px solid var(--border-color, #e2e8f0);
+            border-radius: .5rem;
+            font-size: .85rem;
+            background: var(--bg-surface, #fff);
+            color: var(--text-primary, #0f172a);
+            outline: none;
+            transition: border-color .15s;
+        }
+        .cie10-search-input:focus {
+            border-color: var(--primary, #0891b2);
+        }
+        .cie10-dropdown {
+            position: absolute;
+            z-index: 50;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-surface, #fff);
+            border: 1.5px solid var(--border-color, #e2e8f0);
+            border-radius: .5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .cie10-option {
+            display: flex;
+            align-items: baseline;
+            gap: .5rem;
+            padding: .5rem .75rem;
+            cursor: pointer;
+            font-size: .8125rem;
+            transition: background .1s;
+        }
+        .cie10-option:hover {
+            background: color-mix(in srgb, var(--primary, #0891b2) 8%, transparent);
+        }
+        .cie10-option-code {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary, #0891b2);
+            white-space: nowrap;
+            min-width: 3.5rem;
+        }
+        .cie10-option-desc {
+            color: var(--text-primary, #0f172a);
+        }
+        .cie10-option-empty {
+            padding: .6rem .75rem;
+            font-size: .8rem;
+            color: var(--text-secondary, #94a3b8);
+            text-align: center;
+        }
+
+        /* ── CIE-10 chips seleccionados ──────────────────────────────────── */
+        .cie10-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+        }
+        .cie10-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .3rem .55rem .3rem .5rem;
+            border-radius: 9999px;
+            font-size: .75rem;
+            border: 1.5px solid var(--border-color, #e2e8f0);
+            background: var(--bg-muted, #f8fafc);
+        }
+        .cie10-chip.is-primary {
+            border-color: var(--primary, #0891b2);
+            background: color-mix(in srgb, var(--primary, #0891b2) 10%, transparent);
+        }
+        .cie10-chip-priority {
+            font-weight: 700;
+            font-size: .7rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1.5px solid currentColor;
+            transition: background .1s;
+        }
+        .cie10-chip.is-primary .cie10-chip-priority {
+            background: var(--primary, #0891b2);
+            color: #fff;
+            border-color: var(--primary, #0891b2);
+        }
+        .cie10-chip:not(.is-primary) .cie10-chip-priority {
+            color: var(--text-secondary, #94a3b8);
+        }
+        .cie10-chip-code {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary, #0891b2);
+        }
+        .cie10-chip-desc {
+            color: var(--text-primary, #0f172a);
+            max-width: 14rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .cie10-chip-remove {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: var(--text-secondary, #94a3b8);
+            line-height: 1;
+            font-size: .7rem;
+        }
+        .cie10-chip-remove:hover {
+            color: var(--danger, #ef4444);
+        }
+
+        /* ── CIE-10 vista solo lectura ───────────────────────────────────── */
+        .cie10-read-list {
+            display: flex;
+            flex-direction: column;
+            gap: .4rem;
+            margin-top: .25rem;
+        }
+        .cie10-read-item {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            font-size: .8125rem;
+        }
+        .cie10-read-badge {
+            font-size: .65rem;
+            font-weight: 700;
+            padding: .1rem .35rem;
+            border-radius: 9999px;
+            background: var(--bg-muted, #f1f5f9);
+            color: var(--text-secondary, #64748b);
+            border: 1px solid var(--border-color, #e2e8f0);
+        }
+        .cie10-read-item.cie10-primary .cie10-read-badge {
+            background: color-mix(in srgb, var(--primary, #0891b2) 15%, transparent);
+            color: var(--primary, #0891b2);
+            border-color: var(--primary, #0891b2);
+        }
+        .cie10-read-code {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary, #0891b2);
+        }
+        .cie10-read-desc {
+            color: var(--text-primary, #0f172a);
+        }
+        .cie10-read-notes {
+            color: var(--text-secondary, #64748b);
+            font-style: italic;
+        }
+
+        /* ── Tipo badge (solo lectura) ───────────────────────────────────── */
+        .consult-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .75rem;
+            font-weight: 600;
+            padding: .3rem .75rem;
+            border-radius: 9999px;
+            margin-bottom: .75rem;
+        }
+        .consult-type-externa {
+            background: color-mix(in srgb, #0891b2 10%, transparent);
+            color: #0891b2;
+            border: 1px solid color-mix(in srgb, #0891b2 30%, transparent);
+        }
+        .consult-type-hospitalizacion {
+            background: color-mix(in srgb, #7c3aed 10%, transparent);
+            color: #7c3aed;
+            border: 1px solid color-mix(in srgb, #7c3aed 30%, transparent);
+        }
+
+        /* ── Result sections ─────────────────────────────────────────────── */
+        .result-section {
+            margin-bottom: .75rem;
+        }
+        .result-section:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+
     {% include 'panel/partials/cancel_modal.html' %}
 {% endblock %}
 
@@ -184,7 +593,168 @@
             bindConfirmButtons();
             bindCancelButtons();
 
-            // Resultado de la consulta
+            // ── Tipo de consulta toggle ───────────────────────────────────
+            const typeRadios = document.querySelectorAll('input[name="consultation_type"]');
+            const secExterna = document.getElementById('secExterna');
+            const secHosp    = document.getElementById('secHospitalizacion');
+
+            function applyConsultType() {
+                const val = document.querySelector('input[name="consultation_type"]:checked')?.value || 'externa';
+                if (val === 'hospitalizacion') {
+                    secExterna.hidden = true;
+                    secHosp.hidden    = false;
+                } else {
+                    secExterna.hidden = false;
+                    secHosp.hidden    = true;
+                }
+            }
+            typeRadios.forEach(r => r.addEventListener('change', applyConsultType));
+            applyConsultType();
+
+            // ── CIE-10 widget ─────────────────────────────────────────────
+            let cie10Selected = [];  // [{id, code, description, is_primary, notes}]
+
+            const cie10Input    = document.getElementById('cie10Input');
+            const cie10Dropdown = document.getElementById('cie10Dropdown');
+            const cie10Tags     = document.getElementById('cie10Tags');
+            const cie10Hidden   = document.getElementById('cie10CodesInput');
+
+            // Carga diagnósticos guardados previamente
+            try {
+                const initEl = document.getElementById('cie10InitialData');
+                if (initEl) {
+                    const parsed = JSON.parse(initEl.textContent || '[]');
+                    parsed.forEach(function (item) {
+                        if (!cie10Selected.find(function(x){ return x.id === item.id; })) {
+                            cie10Selected.push({ id: item.id, code: item.code, description: item.description, is_primary: item.is_primary, notes: item.notes || '' });
+                        }
+                    });
+                    renderCie10Tags();
+                }
+            } catch(e) {}
+
+            function renderCie10Tags() {
+                cie10Tags.innerHTML = '';
+                cie10Selected.forEach(function (item, idx) {
+                    const chip = document.createElement('div');
+                    chip.className = 'cie10-chip' + (item.is_primary ? ' is-primary' : '');
+                    chip.dataset.idx = idx;
+
+                    const pBtn = document.createElement('button');
+                    pBtn.type = 'button';
+                    pBtn.className = 'cie10-chip-priority';
+                    pBtn.title = item.is_primary ? 'Diagnóstico principal — click para marcar como secundario' : 'Secundario — click para marcar como principal';
+                    pBtn.textContent = item.is_primary ? 'P' : 'S';
+                    pBtn.addEventListener('click', function () { togglePrimary(idx); });
+
+                    const code = document.createElement('span');
+                    code.className = 'cie10-chip-code';
+                    code.textContent = item.code;
+
+                    const desc = document.createElement('span');
+                    desc.className = 'cie10-chip-desc';
+                    desc.title = item.description;
+                    desc.textContent = item.description;
+
+                    const rm = document.createElement('button');
+                    rm.type = 'button';
+                    rm.className = 'cie10-chip-remove';
+                    rm.title = 'Eliminar';
+                    rm.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    rm.addEventListener('click', function () { removeCie10(idx); });
+
+                    chip.appendChild(pBtn);
+                    chip.appendChild(code);
+                    chip.appendChild(desc);
+                    chip.appendChild(rm);
+                    cie10Tags.appendChild(chip);
+                });
+                syncCie10Hidden();
+            }
+
+            function syncCie10Hidden() {
+                cie10Hidden.value = JSON.stringify(cie10Selected.map(function(x) {
+                    return { id: x.id, is_primary: x.is_primary, notes: x.notes || '' };
+                }));
+            }
+
+            function togglePrimary(idx) {
+                const wasPrimary = cie10Selected[idx].is_primary;
+                cie10Selected.forEach(function(x){ x.is_primary = false; });
+                cie10Selected[idx].is_primary = !wasPrimary;
+                renderCie10Tags();
+            }
+
+            function removeCie10(idx) {
+                const wasP = cie10Selected[idx].is_primary;
+                cie10Selected.splice(idx, 1);
+                if (wasP && cie10Selected.length > 0) {
+                    cie10Selected[0].is_primary = true;
+                }
+                renderCie10Tags();
+            }
+
+            function addCie10(item) {
+                if (cie10Selected.find(function(x){ return x.id === item.id; })) {
+                    showToast('Ese diagnóstico ya está agregado.', 'info');
+                    return;
+                }
+                const isPrimary = cie10Selected.length === 0;
+                cie10Selected.push({ id: item.id, code: item.code, description: item.description, is_primary: isPrimary, notes: '' });
+                renderCie10Tags();
+                cie10Input.value = '';
+                cie10Dropdown.hidden = true;
+            }
+
+            // Búsqueda con debounce
+            let cie10Timer = null;
+            cie10Input.addEventListener('input', function () {
+                clearTimeout(cie10Timer);
+                const q = this.value.trim();
+                if (!q) { cie10Dropdown.hidden = true; return; }
+                cie10Timer = setTimeout(function () { searchCie10(q); }, 280);
+            });
+
+            cie10Input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { cie10Dropdown.hidden = true; }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!cie10Input.contains(e.target) && !cie10Dropdown.contains(e.target)) {
+                    cie10Dropdown.hidden = true;
+                }
+            });
+
+            function searchCie10(q) {
+                $.getJSON('/panel?action=searchcie10&q=' + encodeURIComponent(q), function (resp) {
+                    cie10Dropdown.innerHTML = '';
+                    if (!resp || resp.result !== 'ok' || !resp.data || resp.data.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.className = 'cie10-option-empty';
+                        empty.textContent = 'Sin resultados para "' + q + '"';
+                        cie10Dropdown.appendChild(empty);
+                    } else {
+                        resp.data.forEach(function (item) {
+                            const opt = document.createElement('div');
+                            opt.className = 'cie10-option';
+                            opt.innerHTML = '<span class="cie10-option-code">' + escapeHtml(item.code) + '</span>'
+                                          + '<span class="cie10-option-desc">' + escapeHtml(item.description) + '</span>';
+                            opt.addEventListener('mousedown', function (e) {
+                                e.preventDefault();
+                                addCie10(item);
+                            });
+                            cie10Dropdown.appendChild(opt);
+                        });
+                    }
+                    cie10Dropdown.hidden = false;
+                });
+            }
+
+            function escapeHtml(s) {
+                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+
+            // ── Formulario de resultado ───────────────────────────────────
             const resultForm = document.getElementById('resultForm');
             if (resultForm) {
                 const resultBtn = document.getElementById('resultSubmit');
@@ -195,27 +765,34 @@
                     emptyEl: document.getElementById('medEmpty'),
                     initial: MedicationEditor.readInitial('medicationsData')
                 });
+
                 resultForm.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    const diagnosis = document.getElementById('diagnosis').value.trim();
-                    if (!diagnosis) {
-                        showToast('El diagnóstico es obligatorio.', 'error');
-                        document.getElementById('diagnosis').focus();
-                        return;
-                    }
                     const medError = meds.validate();
-                    if (medError) {
-                        showToast(medError, 'error');
-                        return;
-                    }
-                    setButtonLoading(resultBtn, true, 'Guardando...');
-                    postAction({
+                    if (medError) { showToast(medError, 'error'); return; }
+
+                    const consultType = document.querySelector('input[name="consultation_type"]:checked')?.value || 'externa';
+                    const payload = {
                         action: 'saveresult',
                         id: APPOINTMENT_ID,
-                        diagnosis: diagnosis,
-                        indications: document.getElementById('indications').value.trim(),
-                        medications: meds.serialize()   // siempre se envía ('[]' borra la receta)
-                    }).done(function (response) {
+                        consultation_type: consultType,
+                        reason:      (document.getElementById('reason')?.value || '').trim(),
+                        laboratory:  (document.getElementById('laboratory')?.value || '').trim(),
+                        indications: (document.getElementById('indications')?.value || '').trim(),
+                        medications: meds.serialize(),
+                        cie10_codes: cie10Hidden.value
+                    };
+
+                    if (consultType === 'externa') {
+                        payload.current_illness = (document.getElementById('current_illness')?.value || '').trim();
+                        payload.physical_exam   = (document.getElementById('physical_exam')?.value || '').trim();
+                    } else {
+                        payload.diagnosis = (document.getElementById('diagnosis')?.value || '').trim();
+                        payload.evolution = (document.getElementById('evolution')?.value || '').trim();
+                    }
+
+                    setButtonLoading(resultBtn, true, 'Guardando...');
+                    postAction(payload).done(function (response) {
                         if (response && response.result === 'ok') {
                             reloadWithInfo(response.mensaje || 'Resultado guardado correctamente.');
                         } else {
@@ -230,7 +807,7 @@
                 });
             }
 
-            // Cita de seguimiento: misma lógica de fecha + turnos que Reservar y Reagendar
+            // ── Cita de seguimiento ───────────────────────────────────────
             const followupBtn = document.getElementById('followupSubmit');
             const picker = SlotPicker.create({
                 dateInput: document.getElementById('followupDate'),

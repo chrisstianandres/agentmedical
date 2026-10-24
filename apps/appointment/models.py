@@ -3,6 +3,20 @@ from django.core.exceptions import ValidationError
 from apps.models import ModeloBase
 from django.db import models
 
+class Cie10Code(models.Model):
+    """Catálogo CIE-10 (solo lectura, cargado con load_cie10)."""
+    code = models.CharField(max_length=10, unique=True, db_index=True, verbose_name="Código")
+    description = models.CharField(max_length=300, db_index=True, verbose_name="Descripción")
+
+    def __str__(self):
+        return f"{self.code} – {self.description}"
+
+    class Meta:
+        verbose_name = "Código CIE-10"
+        verbose_name_plural = "Códigos CIE-10"
+        ordering = ['code']
+
+
 class Appointment(ModeloBase):
     from apps.core.models import Specialty
     from apps.patientprofile.models import ProfilePatient
@@ -43,6 +57,23 @@ class Appointment(ModeloBase):
     attended_at = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de atención")
     cancel_reason = models.CharField(max_length=255, blank=True, default='', verbose_name="Motivo de cancelación")
     cancelled_by = models.CharField(max_length=20, choices=CANCELLED_BY_CHOICES, blank=True, default='', verbose_name="Cancelada por")
+
+    # ── Tipo de consulta ────────────────────────────────────────────────────
+    TYPE_EXTERNA = 'externa'
+    TYPE_HOSPITALIZACION = 'hospitalizacion'
+    CONSULTATION_TYPE_CHOICES = [
+        (TYPE_EXTERNA, 'Consulta externa'),
+        (TYPE_HOSPITALIZACION, 'Hospitalización / Internación'),
+    ]
+    consultation_type = models.CharField(
+        max_length=20, choices=CONSULTATION_TYPE_CHOICES,
+        default=TYPE_EXTERNA, verbose_name="Tipo de consulta"
+    )
+    # ── Campos clínicos ──────────────────────────────────────────────────────
+    current_illness  = models.TextField(blank=True, null=True, verbose_name="Enfermedad actual")
+    physical_exam    = models.TextField(blank=True, null=True, verbose_name="Examen físico")
+    laboratory       = models.TextField(blank=True, null=True, verbose_name="Laboratorios / Imágenes")
+    evolution        = models.TextField(blank=True, null=True, verbose_name="Evolución")
 
     def __str__(self):
         return f"Cita con {self.doctor} el {self.appointment_date} a las {self.appointment_time}"
@@ -86,3 +117,25 @@ class PrescribedMedication(ModeloBase):
         verbose_name = "Medicamento prescrito"
         verbose_name_plural = "Medicamentos prescritos"
         ordering = ['order', 'id']
+
+
+class AppointmentDiagnosis(ModeloBase):
+    """Diagnósticos CIE-10 asociados a una cita (uno puede ser principal)."""
+    appointment = models.ForeignKey(
+        Appointment, on_delete=models.CASCADE,
+        related_name='cie10_diagnoses', verbose_name="Cita"
+    )
+    cie10 = models.ForeignKey(
+        Cie10Code, on_delete=models.PROTECT, verbose_name="Código CIE-10"
+    )
+    is_primary = models.BooleanField(default=False, verbose_name="Principal")
+    notes = models.CharField(max_length=255, blank=True, default='', verbose_name="Notas")
+
+    def __str__(self):
+        label = "Principal" if self.is_primary else "Secundario"
+        return f"{self.cie10.code} ({label})"
+
+    class Meta:
+        verbose_name = "Diagnóstico CIE-10"
+        verbose_name_plural = "Diagnósticos CIE-10"
+        ordering = ['-is_primary', 'id']
