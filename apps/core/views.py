@@ -73,9 +73,20 @@ def can_be_admin(request):
     return request.user.is_superuser or request.user.groups.filter(name=ADMIN_GROUP).exists()
 
 
+def can_be_patient(request):
+    """ Es paciente si está en el grupo 'patient' o ya tiene un ProfilePatient activo """
+    from apps.patientprofile.models import ProfilePatient
+    return (
+        request.user.groups.filter(name='patient').exists()
+        or ProfilePatient.objects.filter(person_id=request.session['person'].id, status=True).exists()
+    )
+
+
 def available_profiles(request):
-    """ Perfiles que puede usar el usuario en sesión, en orden de menú """
-    profiles = ['patient']
+    """ Solo incluye los perfiles que el usuario realmente tiene """
+    profiles = []
+    if can_be_patient(request):
+        profiles.append('patient')
     if can_be_doctor(request):
         profiles.append('doctor')
     if can_be_admin(request):
@@ -84,7 +95,13 @@ def available_profiles(request):
 
 
 def can_use_profile(request, profile):
-    return profile == 'patient' or (profile == 'doctor' and can_be_doctor(request)) or (profile == 'admin' and can_be_admin(request))
+    if profile == 'patient':
+        return can_be_patient(request)
+    if profile == 'doctor':
+        return can_be_doctor(request)
+    if profile == 'admin':
+        return can_be_admin(request)
+    return False
 
 
 def update_person_contact(request, person):
@@ -356,18 +373,16 @@ def appointment_tab_querysets(base):
 
 
 def get_active_profile(request):
-    """ Perfil activo en sesión ('patient' | 'doctor' | 'admin'); lo inicializa si falta o ya no es válido """
+    """ Perfil activo en sesión; prioridad: admin > doctor > patient """
     profile = request.session.get('active_profile')
     if profile in PROFILE_HOME and can_use_profile(request, profile):
         return profile
     if can_be_admin(request):
         profile = 'admin'
+    elif can_be_doctor(request):
+        profile = 'doctor'
     else:
         profile = 'patient'
-        if can_be_doctor(request):
-            patient = get_patient(request.session['person'])
-            if not (patient and patient.appointment_set.exists()):
-                profile = 'doctor'
     request.session['active_profile'] = profile
     return profile
 
