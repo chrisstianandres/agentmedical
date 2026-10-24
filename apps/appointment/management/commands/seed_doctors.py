@@ -559,15 +559,15 @@ class Command(BaseCommand):
                 times = _build_times(schedule.start_time, schedule.end_time)
                 if not times:
                     continue
-                # 2–4 citas por doctor por día
-                n = random.randint(2, min(4, len(times)))
+                # 4–7 citas por doctor por día
+                n = random.randint(4, min(7, len(times)))
                 chosen_times = random.sample(times, n)
                 for t in chosen_times:
                     make_appointment(doctor, next_patient(), current, t, schedule, past=True)
             current += timedelta(days=1)
 
-        # — Citas futuras: hoy → próximos 7 días —
-        future_end = today + timedelta(days=7)
+        # — Citas futuras: hoy → fin de la próxima semana (14 días) —
+        future_end = today + timedelta(days=14)
         current = today
 
         while current <= future_end:
@@ -581,8 +581,8 @@ class Command(BaseCommand):
                 times = _build_times(schedule.start_time, schedule.end_time)
                 if not times:
                     continue
-                # 2–5 citas por doctor por día
-                n = random.randint(2, min(5, len(times)))
+                # 4–8 citas por doctor por día
+                n = random.randint(4, min(8, len(times)))
                 chosen_times = random.sample(times, n)
                 for t in chosen_times:
                     make_appointment(doctor, next_patient(), current, t, schedule, past=False)
