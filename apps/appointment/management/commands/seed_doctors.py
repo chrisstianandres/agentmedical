@@ -135,12 +135,9 @@ class Command(BaseCommand):
         ]
 
         if options['reset']:
-            self.stdout.write(self.style.WARNING('Eliminando datos previos...'))
             User.objects.filter(username__in=DOCTOR_USERNAMES + PATIENT_USERNAMES).delete()
-            self.stdout.write('  Usuarios eliminados.')
 
         # ── 1. Geografía ────────────────────────────────────────────────────
-        self.stdout.write('Configurando geografía...')
         country, _ = Country.objects.get_or_create(name='Ecuador')
         province, _ = Province.objects.get_or_create(
             name='Guayas', defaults={'country': country}
@@ -157,7 +154,6 @@ class Command(BaseCommand):
         )
 
         # ── 2. Especialidades ────────────────────────────────────────────────
-        self.stdout.write('Creando especialidades...')
 
         def get_or_create_specialty(title, description):
             sp = Specialty.objects.filter(title=title).first()
@@ -349,12 +345,8 @@ class Command(BaseCommand):
                 )
 
             doctor_profiles.append(profile)
-            self.stdout.write(
-                self.style.SUCCESS(f'  Doctor: {person.full_name()} ({info["office"]})')
-            )
 
         # ── 6. Pacientes ─────────────────────────────────────────────────────
-        self.stdout.write('Creando pacientes...')
 
         patients_info = [
             dict(username='amartinez_p', names='Ana', lastnames='Martinez Vera',
@@ -469,12 +461,7 @@ class Command(BaseCommand):
             )
             patient_profiles.append(patient)
 
-        self.stdout.write(
-            self.style.SUCCESS(f'  {len(patient_profiles)} pacientes listos.')
-        )
-
         # ── 7. Citas ─────────────────────────────────────────────────────────
-        self.stdout.write('Creando citas médicas...')
 
         today = date.today()
         appt_count = 0
@@ -602,17 +589,6 @@ class Command(BaseCommand):
             current += timedelta(days=1)
 
         # ── Resumen ──────────────────────────────────────────────────────────
-        self.stdout.write('')
-        self.stdout.write(self.style.SUCCESS('✓ Datos creados exitosamente:'))
-        self.stdout.write(f'  Doctores   : {len(doctor_profiles)}')
-        self.stdout.write(f'  Pacientes  : {len(patient_profiles)}')
-        self.stdout.write(f'  Citas total: {appt_count}')
-        self.stdout.write('')
-        self.stdout.write('Credenciales de acceso:')
-        self.stdout.write('  Doctores  → contraseña: Doctor2024*')
-        self.stdout.write('    rferuzola  (Ruben Dario Feruzola Gomez)')
-        self.stdout.write('    hgomez     (Hector Andres Gomez)')
-        self.stdout.write('    jolivo     (Johang Mauricio Olivo Roman)')
-        self.stdout.write('  Pacientes → contraseña: Paciente2024*')
-        self.stdout.write('    amartinez_p  jlopez_p  mgarcia_p  pmorales_p  lrojas_p')
-        self.stdout.write('    cespinoza_p  svalencia_p  fherrera_p  vsalinas_p  dcordova_p')
+        self.stdout.write(self.style.SUCCESS(
+            f'Listo: {len(doctor_profiles)} doctores, {len(patient_profiles)} pacientes, {appt_count} citas.'
+        ))
