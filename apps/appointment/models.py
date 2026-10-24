@@ -29,10 +29,10 @@ class Appointment(ModeloBase):
         (CANCELLED_BY_ADMIN, 'Administrativo'),
     ]
 
-    patient = models.ForeignKey(ProfilePatient, on_delete=models.CASCADE, verbose_name="Paciente")
-    doctor = models.ForeignKey(ProfileMedical, on_delete=models.CASCADE, verbose_name="Doctor")
-    speciality = models.ForeignKey(Specialty, on_delete=models.CASCADE, verbose_name="Especialidad")
-    consultation_schedule = models.ForeignKey(ConsultationSchedule, on_delete=models.CASCADE, verbose_name="Horario de consulta")
+    patient = models.ForeignKey(ProfilePatient, on_delete=models.PROTECT, verbose_name="Paciente")
+    doctor = models.ForeignKey(ProfileMedical, on_delete=models.PROTECT, verbose_name="Doctor")
+    speciality = models.ForeignKey(Specialty, on_delete=models.PROTECT, verbose_name="Especialidad")
+    consultation_schedule = models.ForeignKey(ConsultationSchedule, on_delete=models.PROTECT, verbose_name="Horario de consulta")
     appointment_time = models.TimeField(verbose_name="Hora de la cita")
     appointment_date = models.DateField(verbose_name="Fecha de la cita")
     # Reemplaza el booleano heredado de ModeloBase por el estado de la cita
