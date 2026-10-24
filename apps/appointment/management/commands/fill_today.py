@@ -130,9 +130,12 @@ class Command(BaseCommand):
         sys_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
         SYS_UID = sys_user.id if sys_user else None
 
-        now_aware = timezone.now()
-        now = timezone.localtime(now_aware).replace(tzinfo=None)  # hora local Ecuador, naive
+        from datetime import timezone as _dt_tz
+        _ECUADOR_TZ = _dt_tz(timedelta(hours=-5))
+        now = datetime.now(_dt_tz.utc).astimezone(_ECUADOR_TZ).replace(tzinfo=None)
         today = now.date()
+        # Diagnóstico: confirmar hora local Ecuador
+        import sys; print(f'[fill_today] hora Ecuador: {now.strftime("%H:%M")}  fecha: {today}', file=sys.stderr)
         day_name = DAY_MAP[today.weekday()]
         grace = timedelta(minutes=getattr(settings, 'APPOINTMENT_EXPIRE_GRACE_MINUTES', 120))
 

@@ -1,13 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as _dt_tz
 
 from django.conf import settings
 from django.db.models import Q
-from django.utils import timezone as dj_timezone
+
+# Ecuador = UTC-5, sin horario de verano
+_ECUADOR_TZ = _dt_tz(timedelta(hours=-5))
 
 
 def _local_now():
-    """Hora local según TIME_ZONE de Django, como datetime naive para comparar con campos naive de la BD."""
-    return dj_timezone.localtime(dj_timezone.now()).replace(tzinfo=None)
+    """Hora actual en Ecuador (UTC-5), naive, para comparar con campos naive de la BD."""
+    return datetime.now(_dt_tz.utc).astimezone(_ECUADOR_TZ).replace(tzinfo=None)
 
 
 def expire_appointments(now=None):
