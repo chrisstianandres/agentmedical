@@ -28,13 +28,13 @@ class ModeloBase(models.Model):
             if 'update_fields' == key:
                 update_fields = value
         if self.id:
-            self.usuario_modificacion_id = usuario if usuario else 1
+            self.usuario_modificacion_id = usuario
             self.fecha_modificacion = fecha_modificacion
             if update_fields is not None:
                 update_fields = [*update_fields, 'usuario_modificacion_id', 'fecha_modificacion']
                 kwargs['update_fields'] = list(set(update_fields))
         else:
-            self.usuario_creacion_id = usuario if usuario else 1
+            self.usuario_creacion_id = usuario
             self.fecha_creacion = fecha_modificacion
             if fecha_creacion:
                 self.fecha_creacion = fecha_creacion
