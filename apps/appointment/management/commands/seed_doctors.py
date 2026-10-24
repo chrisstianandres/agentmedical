@@ -13,6 +13,7 @@ from datetime import date, time, timedelta, datetime
 from django.contrib.auth.models import User, Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 
 DAY_MAP = {
@@ -128,6 +129,10 @@ class Command(BaseCommand):
         from apps.patientprofile.models import ProfilePatient
         from apps.appointment.models import Appointment, PrescribedMedication
 
+        # ID de un usuario existente para ModeloBase (evita FK violation en SQLite)
+        system_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
+        SYS_UID = system_user.id if system_user else None
+
         DOCTOR_USERNAMES = ['rferuzola', 'hgomez', 'jolivo']
         PATIENT_USERNAMES = [
             'amartinez_p', 'jlopez_p', 'mgarcia_p', 'pmorales_p', 'lrojas_p',
@@ -159,7 +164,7 @@ class Command(BaseCommand):
             sp = Specialty.objects.filter(title=title).first()
             if not sp:
                 sp = Specialty(title=title, description=description, image='')
-                sp.save(usuario_id=1)
+                sp.save(usuario_id=SYS_UID)
             return sp
 
         specialty_general = get_or_create_specialty(
@@ -529,15 +534,15 @@ class Command(BaseCommand):
                     reason=REASONS_PAST[idx],
                     diagnosis=DIAGNOSES[idx],
                     indications=INDICATIONS[idx],
-                    attended_at=datetime.combine(appt_date, appt_time),
+                    attended_at=timezone.make_aware(datetime.combine(appt_date, appt_time)),
                 )
-                appt.save(usuario_id=1)
+                appt.save(usuario_id=SYS_UID)
                 for order, (name, dose, freq, dur, route) in enumerate(MEDICATIONS[idx]):
                     PrescribedMedication(
                         appointment=appt,
                         name=name, dose=dose, frequency=freq,
                         duration=dur, route=route, order=order,
-                    ).save(usuario_id=1)
+                    ).save(usuario_id=SYS_UID)
             else:
                 appt = Appointment(
                     patient=patient,
@@ -549,7 +554,7 @@ class Command(BaseCommand):
                     status=random.choice(['pendiente', 'confirmada']),
                     reason=random.choice(FUTURE_REASONS),
                 )
-                appt.save(usuario_id=1)
+                appt.save(usuario_id=SYS_UID)
             appt_count += 1
 
         # — Citas pasadas: primer día del mes pasado → ayer —
