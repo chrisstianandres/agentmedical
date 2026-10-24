@@ -29,6 +29,100 @@
   <!-- Main CSS File -->
   <link href="{% static '/assets/css/main.css'%}" rel="stylesheet">
 
+  <!-- Fuente Figtree para la barra de navegación -->
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Skip link (WCAG) ── */
+    .am-skip{position:absolute;top:-999px;left:12px;background:#0891B2;color:#fff;padding:8px 18px;border-radius:4px;font-weight:600;z-index:9999;text-decoration:none;font-size:.875rem;transition:top .15s}
+    .am-skip:focus{top:8px}
+
+    /* ── Topbar de contacto ── */
+    .am-topbar{background:linear-gradient(90deg,#0891B2,#0E7490);overflow:hidden;transition:height .3s,opacity .3s}
+    .am-topbar>.container{height:40px;display:flex;align-items:center;justify-content:space-between}
+    .am-contact-info{display:flex;gap:18px;align-items:center}
+    .am-contact-info a{color:rgba(255,255,255,.9);text-decoration:none;font-size:.8rem;font-weight:500;display:flex;align-items:center;gap:6px;min-height:40px;transition:color .2s}
+    .am-contact-info a:hover{color:#fff}
+    .am-contact-info a:focus-visible{outline:2px solid rgba(255,255,255,.7);outline-offset:2px;border-radius:3px}
+    .am-doctor-hint{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:.78rem}
+    .am-doctor-hint a{color:#fff;font-weight:700;text-decoration:none;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.28);transition:background .2s}
+    .am-doctor-hint a:hover{background:rgba(255,255,255,.30)}
+    .scrolled .am-topbar{height:0!important;opacity:0;pointer-events:none}
+
+    /* ── Barra de navegación principal ── */
+    .am-navbar{background:#fff;border-bottom:1px solid #E2E8F0;box-shadow:0 2px 12px rgba(0,0,0,.06);transition:box-shadow .3s}
+    .am-navbar>.container{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .scrolled .am-navbar{box-shadow:0 4px 24px rgba(0,0,0,.10)}
+
+    /* Logo */
+    .am-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+    .am-logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#0891B2,#22D3EE);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;flex-shrink:0}
+    .am-logo-name{font-family:'Figtree',Poppins,system-ui,sans-serif;font-size:1.2rem;font-weight:800;color:#134E4A;letter-spacing:-.02em;line-height:1.1}
+    .am-logo:focus-visible{outline:3px solid #0891B2;outline-offset:4px;border-radius:8px}
+
+    /* Nav links desktop */
+    .am-nav{display:flex;align-items:center}
+    .am-nav ul{display:flex;list-style:none;margin:0;padding:0;gap:2px}
+    .am-nav ul li a{font-size:.875rem;font-weight:500;color:#475569;padding:8px 11px;border-radius:8px;text-decoration:none;display:flex;align-items:center;min-height:44px;white-space:nowrap;transition:color .15s,background .15s}
+    .am-nav ul li a::before{display:none!important}
+    .am-nav ul li a:hover{color:#0891B2;background:rgba(8,145,178,.07)}
+    .am-nav ul li a.active{color:#0891B2;font-weight:600;background:rgba(8,145,178,.08)}
+    .am-nav ul li a:focus-visible{outline:3px solid #0891B2;outline-offset:2px}
+
+    /* Botones CTA */
+    .am-ctas{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .am-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-weight:600;font-size:.8rem;text-decoration:none;border:none;cursor:pointer;min-height:40px;white-space:nowrap;transition:all .15s}
+    .am-btn:focus-visible{outline:3px solid #0891B2;outline-offset:3px}
+    .am-btn-doctor{background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE}
+    .am-btn-doctor:hover{background:#1D4ED8;color:#fff;border-color:#1D4ED8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(29,78,216,.28)}
+    .am-btn-patient{background:linear-gradient(135deg,#0891B2,#0E7490);color:#fff;border:1.5px solid transparent}
+    .am-btn-patient:hover{background:linear-gradient(135deg,#0E7490,#155E75);transform:translateY(-1px);box-shadow:0 4px 14px rgba(8,145,178,.38)}
+
+    /* Hamburguesa móvil */
+    .am-toggle{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:10px;border-radius:8px;min-width:44px;min-height:44px;flex-shrink:0}
+    .am-toggle:focus-visible{outline:3px solid #0891B2;outline-offset:2px}
+    .am-bar{display:block;width:22px;height:2px;background:#134E4A;border-radius:2px;transition:transform .25s,opacity .2s}
+    .am-toggle.open .am-bar:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .am-toggle.open .am-bar:nth-child(2){opacity:0;transform:scaleX(0)}
+    .am-toggle.open .am-bar:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+    /* Overlay y drawer */
+    .am-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:998;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
+    .am-overlay.open{opacity:1;pointer-events:auto}
+    .am-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,86vw);background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.15);z-index:999;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+    .am-drawer.open{transform:translateX(0)}
+    .am-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #F1F5F9}
+    .am-drawer-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .am-drawer-logo .am-logo-icon{width:32px;height:32px;font-size:.95rem}
+    .am-drawer-logo .am-logo-name{font-size:1.05rem}
+    .am-close{background:#F1F5F9;border:none;border-radius:8px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#475569;font-size:1.05rem;transition:background .15s}
+    .am-close:hover{background:#E2E8F0}
+    .am-close:focus-visible{outline:3px solid #0891B2}
+    .am-drawer nav{flex:1;padding:8px 16px}
+    .am-drawer nav ul{list-style:none;margin:0;padding:0}
+    .am-drawer nav li{border-bottom:1px solid #F8FAFC}
+    .am-drawer nav a{display:flex;align-items:center;gap:10px;padding:13px 8px;font-size:.975rem;font-weight:500;color:#134E4A;text-decoration:none;min-height:52px;transition:color .15s}
+    .am-drawer nav a:hover{color:#0891B2}
+    .am-drawer nav a:focus-visible{outline:3px solid #0891B2;outline-offset:2px;border-radius:4px}
+    .am-drawer nav a i{font-size:1.05rem;color:#94A3B8;flex-shrink:0}
+    .am-drawer-ctas{padding:16px 16px 24px;border-top:1px solid #F1F5F9;display:flex;flex-direction:column;gap:10px}
+    .am-drawer-ctas .am-btn{justify-content:center;font-size:.9rem;padding:13px 20px;min-height:52px}
+    .am-login-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;color:#64748B;font-size:.85rem;font-weight:500;text-decoration:none;border-radius:8px;transition:color .15s,background .15s}
+    .am-login-link:hover{color:#0891B2;background:rgba(8,145,178,.06)}
+
+    @media(max-width:1199px){
+      .am-nav,.am-ctas{display:none}
+      .am-toggle{display:flex}
+    }
+    @media(max-width:575px){
+      .am-doctor-hint{display:none}
+      .am-logo-name{font-size:1.05rem}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .am-bar,.am-drawer,.am-overlay,.am-btn{transition-duration:.01ms!important}
+    }
+  </style>
+
   <!-- =======================================================
   * Template Name: Medilab
   * Template URL: https://bootstrapmade.com/medilab-free-medical-bootstrap-theme/
@@ -40,70 +134,130 @@
 
 <body class="index-page">
 
-  <header id="header" class="header sticky-top">
+  <!-- Enlace de salto accesible (WCAG 2.1 — criterio 2.4.1) -->
+  <a class="am-skip" href="#main-content">Saltar al contenido principal</a>
 
-    <div class="topbar d-flex align-items-center">
-      <div class="container d-flex justify-content-center justify-content-md-between">
-        <div class="contact-info d-flex align-items-center">
-          <i class="bi bi-envelope d-flex align-items-center"><a href="mailto:contact@example.com">contact@example.com</a></i>
-          <i class="bi bi-phone d-flex align-items-center ms-4"><span>+1 5589 55488 55</span></i>
+  <header id="header" class="header sticky-top" role="banner">
+
+    <!-- Topbar: contacto y acceso rápido para médicos -->
+    <div class="am-topbar" role="region" aria-label="Información de contacto">
+      <div class="container">
+        <div class="am-contact-info">
+          <a href="mailto:contacto@example.com" aria-label="Enviar correo electrónico">
+            <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+            <span>contacto@example.com</span>
+          </a>
+          <a href="tel:+15589554855" aria-label="Llamar por teléfono">
+            <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+            <span>+1 5589 55488 55</span>
+          </a>
         </div>
-        <div class="social-links d-none d-md-flex align-items-center">
-          <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
-          <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
-          <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
-          <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
+        <div class="am-doctor-hint" aria-hidden="true">
+          <i class="bi bi-hospital" aria-hidden="true"></i>
+          <span>¿Eres médico?</span>
+          <a href="{% url 'login' %}?role=doctor" tabindex="-1">Accede aquí</a>
         </div>
       </div>
-    </div><!-- End Top Bar -->
+    </div>
 
-    <div class="branding d-flex align-items-center">
+    <!-- Barra de navegación principal -->
+    <div class="am-navbar">
+      <div class="container">
 
-      <div class="container position-relative d-flex align-items-center justify-content-between">
-        <a href="index.html" class="logo d-flex align-items-center me-auto">
-          <!-- Uncomment the line below if you also wish to use an image logo -->
-          <!-- <img src="assets/img/logo.png" alt=""> -->
-          <h1 class="sitename">{{ entity.name }}</h1>
+        <!-- Logo -->
+        <a href="/" class="am-logo" aria-label="{{ entity.name }} — Ir al inicio">
+          <div class="am-logo-icon" aria-hidden="true">
+            <i class="bi bi-heart-pulse-fill"></i>
+          </div>
+          <span class="am-logo-name">{{ entity.name }}</span>
         </a>
 
-        <nav id="navmenu" class="navmenu">
-          <ul>
-            <li><a href="#hero" class="active">Inicio<br></a></li>
-            <li><a href="#about">Sobre nosotros</a></li>
-            <li><a href="#services">Nuestros servicios</a></li>
-            <li><a href="#departments">Nuestras especialidades</a></li>
+        <!-- Navegación desktop -->
+        <nav id="navmenu" class="am-nav" aria-label="Navegación principal">
+          <ul role="list">
+            <li><a href="#hero" class="active" aria-current="page">Inicio</a></li>
+            <li><a href="#about">Nosotros</a></li>
+            <li><a href="#services">Servicios</a></li>
+            <li><a href="#departments">Especialidades</a></li>
             <li><a href="#doctors">Especialistas</a></li>
-{#            <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>#}
-{#              <ul>#}
-{#                <li><a href="#">Dropdown 1</a></li>#}
-{#                <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>#}
-{#                  <ul>#}
-{#                    <li><a href="#">Deep Dropdown 1</a></li>#}
-{#                    <li><a href="#">Deep Dropdown 2</a></li>#}
-{#                    <li><a href="#">Deep Dropdown 3</a></li>#}
-{#                    <li><a href="#">Deep Dropdown 4</a></li>#}
-{#                    <li><a href="#">Deep Dropdown 5</a></li>#}
-{#                  </ul>#}
-{#                </li>#}
-{#                <li><a href="#">Dropdown 2</a></li>#}
-{#                <li><a href="#">Dropdown 3</a></li>#}
-{#                <li><a href="#">Dropdown 4</a></li>#}
-{#              </ul>#}
-{#            </li>#}
-            <li><a href="#contact">Contáctanos</a></li>
+            <li><a href="#contact">Contacto</a></li>
           </ul>
-          <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
         </nav>
 
-        <a class="cta-btn d-none d-sm-block" href="/panel?action=appointment">Reserva una cita</a>
+        <!-- CTAs desktop: paciente y médico -->
+        <div class="am-ctas" role="group" aria-label="Accesos rápidos">
+          <a href="{% url 'login' %}?role=doctor" class="am-btn am-btn-doctor" aria-label="Acceder al portal médico">
+            <i class="bi bi-hospital" aria-hidden="true"></i>
+            <span>Portal Médico</span>
+          </a>
+          <a href="/panel?action=appointment" class="am-btn am-btn-patient" aria-label="Reservar una cita médica">
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+            <span>Reservar cita</span>
+          </a>
+        </div>
 
+        <!-- Botón hamburguesa (móvil) -->
+        <button class="am-toggle" id="am-toggle" type="button"
+                aria-expanded="false" aria-controls="am-drawer"
+                aria-label="Abrir menú de navegación">
+          <span class="am-bar"></span>
+          <span class="am-bar"></span>
+          <span class="am-bar"></span>
+        </button>
+
+        <!-- Necesario para que main.js no falle al buscar .mobile-nav-toggle -->
+        <i class="mobile-nav-toggle d-none" aria-hidden="true"></i>
+
+      </div>
+    </div>
+
+    <!-- Overlay oscuro (clic para cerrar) -->
+    <div class="am-overlay" id="am-overlay" aria-hidden="true"></div>
+
+    <!-- Drawer lateral móvil -->
+    <div class="am-drawer" id="am-drawer" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+
+      <div class="am-drawer-header">
+        <a href="/" class="am-drawer-logo" aria-label="{{ entity.name }}">
+          <div class="am-logo-icon" aria-hidden="true"><i class="bi bi-heart-pulse-fill"></i></div>
+          <span class="am-logo-name">{{ entity.name }}</span>
+        </a>
+        <button class="am-close" id="am-close" type="button" aria-label="Cerrar menú">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <nav aria-label="Menú principal">
+        <ul role="list">
+          <li><a href="#hero"><i class="bi bi-house-door" aria-hidden="true"></i>Inicio</a></li>
+          <li><a href="#about"><i class="bi bi-info-circle" aria-hidden="true"></i>Sobre nosotros</a></li>
+          <li><a href="#services"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>Nuestros servicios</a></li>
+          <li><a href="#departments"><i class="bi bi-diagram-3" aria-hidden="true"></i>Especialidades</a></li>
+          <li><a href="#doctors"><i class="bi bi-person-badge" aria-hidden="true"></i>Especialistas</a></li>
+          <li><a href="#contact"><i class="bi bi-telephone" aria-hidden="true"></i>Contáctanos</a></li>
+        </ul>
+      </nav>
+
+      <div class="am-drawer-ctas">
+        <a href="/panel?action=appointment" class="am-btn am-btn-patient">
+          <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+          Reservar cita (Paciente)
+        </a>
+        <a href="{% url 'login' %}?role=doctor" class="am-btn am-btn-doctor">
+          <i class="bi bi-hospital" aria-hidden="true"></i>
+          Portal Médico
+        </a>
+        <a href="{% url 'login' %}" class="am-login-link">
+          <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+          Iniciar sesión
+        </a>
       </div>
 
     </div>
 
   </header>
 
-  <main class="main">
+  <main id="main-content" class="main">
 
     <!-- Hero Section -->
     <section id="hero" class="hero section light-background">
@@ -175,8 +329,12 @@
         <div class="row gy-4 gx-5">
 
           <div class="col-lg-6 position-relative align-self-start" data-aos="fade-up" data-aos-delay="200">
-            <img src="{{ about_us.picturevideo.url }}" class="img-fluid" alt="">
-            <a href="{{ about_us.urlvideo }}" class="glightbox pulsating-play-btn"></a>
+            {% if about_us.picturevideo %}
+              <img src="{{ about_us.picturevideo.url }}" class="img-fluid" alt="Sobre nosotros">
+              {% if about_us.urlvideo %}
+                <a href="{{ about_us.urlvideo }}" class="glightbox pulsating-play-btn"></a>
+              {% endif %}
+            {% endif %}
           </div>
 
           <div class="col-lg-6 content" data-aos="fade-up" data-aos-delay="100">
@@ -403,7 +561,9 @@
                     <p>{{ speciality.description }}</p>
                   </div>
                   <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="{{ speciality.image.url }}" alt="" class="img-fluid">
+                    {% if speciality.image %}
+                      <img src="{{ speciality.image.url }}" alt="{{ speciality.title }}" class="img-fluid">
+                    {% endif %}
                   </div>
                 </div>
               </div>
@@ -552,6 +712,168 @@
       </div>
 
     </section><!-- /Doctors Section -->
+
+    <!-- Doctor Portal Section -->
+    <section id="portal-medico" class="section" style="background: linear-gradient(145deg, #0891B2 0%, #0E7490 50%, #134E4A 100%); overflow: hidden; position: relative;">
+
+      <!-- Círculos decorativos -->
+      <div style="position:absolute;top:-80px;right:-80px;width:320px;height:320px;background:rgba(34,211,238,0.12);border-radius:50%;pointer-events:none;" aria-hidden="true"></div>
+      <div style="position:absolute;bottom:-60px;left:-60px;width:240px;height:240px;background:rgba(34,197,94,0.10);border-radius:50%;pointer-events:none;" aria-hidden="true"></div>
+
+      <div class="container position-relative" style="z-index:1;">
+
+        <div class="row align-items-center gy-5">
+
+          <!-- Texto izquierda -->
+          <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
+
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:30px;padding:6px 16px;margin-bottom:20px;">
+              <i class="bi bi-hospital" style="color:#22D3EE;font-size:0.9rem;" aria-hidden="true"></i>
+              <span style="color:rgba(255,255,255,0.9);font-size:0.82rem;font-weight:600;letter-spacing:0.04em;">PORTAL MÉDICO PROFESIONAL</span>
+            </div>
+
+            <h2 style="color:#ffffff;font-size:2rem;font-weight:700;line-height:1.25;margin-bottom:16px;">
+              Herramientas diseñadas<br>para profesionales de la salud
+            </h2>
+            <p style="color:rgba(255,255,255,0.82);font-size:1.05rem;line-height:1.7;margin-bottom:32px;">
+              Accede a tu panel clínico, gestiona tu agenda de citas, consulta el historial de pacientes y registra resultados de consultas — todo desde un solo lugar seguro.
+            </p>
+
+            <!-- Features -->
+            <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:36px;">
+
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-calendar2-week" style="color:#22D3EE;font-size:1.1rem;" aria-hidden="true"></i>
+                </div>
+                <div>
+                  <p style="color:#ffffff;font-weight:600;margin:0 0 2px;">Gestión de agenda</p>
+                  <p style="color:rgba(255,255,255,0.72);font-size:0.875rem;margin:0;">Configura tus horarios y bloqueos de forma flexible según tu disponibilidad.</p>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-people" style="color:#22D3EE;font-size:1.1rem;" aria-hidden="true"></i>
+                </div>
+                <div>
+                  <p style="color:#ffffff;font-weight:600;margin:0 0 2px;">Historial de pacientes</p>
+                  <p style="color:rgba(255,255,255,0.72);font-size:0.875rem;margin:0;">Consulta el perfil clínico completo, antecedentes y citas anteriores.</p>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-clipboard2-pulse" style="color:#22D3EE;font-size:1.1rem;" aria-hidden="true"></i>
+                </div>
+                <div>
+                  <p style="color:#ffffff;font-weight:600;margin:0 0 2px;">Registro de consultas</p>
+                  <p style="color:rgba(255,255,255,0.72);font-size:0.875rem;margin:0;">Documenta diagnósticos, tratamientos y medicamentos de manera estructurada.</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- CTA button -->
+            <a
+              href="{% url 'login' %}?role=doctor"
+              style="
+                display:inline-flex;
+                align-items:center;
+                gap:10px;
+                background:#ffffff;
+                color:#0891B2;
+                padding:14px 28px;
+                border-radius:12px;
+                font-weight:700;
+                font-size:1rem;
+                text-decoration:none;
+                transition:all 200ms ease;
+                box-shadow:0 4px 20px rgba(0,0,0,0.15);
+                min-height:52px;
+              "
+              onmouseover="this.style.background='#F0FDFA';this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,0.2)';"
+              onmouseout="this.style.background='#ffffff';this.style.transform='';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)';"
+            >
+              <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+              Ingresar al portal médico
+            </a>
+
+          </div>
+
+          <!-- Tarjeta de acceso al portal -->
+          <div class="col-lg-6 d-flex justify-content-center" data-aos="fade-left" data-aos-delay="200">
+            <div style="
+              background:rgba(255,255,255,0.10);
+              border:1px solid rgba(255,255,255,0.20);
+              border-radius:20px;
+              padding:28px;
+              width:100%;
+              max-width:380px;
+              backdrop-filter:blur(12px);
+            ">
+              <!-- Ícono central -->
+              <div style="text-align:center;margin-bottom:22px;">
+                <div style="width:72px;height:72px;background:rgba(255,255,255,0.15);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;">
+                  <i class="bi bi-hospital" style="color:#22D3EE;font-size:2rem;" aria-hidden="true"></i>
+                </div>
+                <p style="color:#ffffff;font-weight:700;font-size:1.05rem;margin:0;">Portal Médico</p>
+                <p style="color:rgba(255,255,255,0.6);font-size:0.8rem;margin:4px 0 0;">Acceso exclusivo para profesionales</p>
+              </div>
+
+              <!-- Lista de capacidades del portal -->
+              <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
+
+                <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;">
+                  <i class="bi bi-calendar2-check" style="color:#22D3EE;font-size:1.1rem;flex-shrink:0;" aria-hidden="true"></i>
+                  <span style="color:rgba(255,255,255,0.9);font-size:0.85rem;font-weight:500;">Gestión completa de citas y horarios</span>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;">
+                  <i class="bi bi-file-earmark-medical" style="color:#22D3EE;font-size:1.1rem;flex-shrink:0;" aria-hidden="true"></i>
+                  <span style="color:rgba(255,255,255,0.9);font-size:0.85rem;font-weight:500;">Historial clínico y evolución del paciente</span>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;">
+                  <i class="bi bi-capsule" style="color:#22D3EE;font-size:1.1rem;flex-shrink:0;" aria-hidden="true"></i>
+                  <span style="color:rgba(255,255,255,0.9);font-size:0.85rem;font-weight:500;">Prescripción de medicamentos digitalizada</span>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;">
+                  <i class="bi bi-shield-lock" style="color:#22D3EE;font-size:1.1rem;flex-shrink:0;" aria-hidden="true"></i>
+                  <span style="color:rgba(255,255,255,0.9);font-size:0.85rem;font-weight:500;">Acceso seguro con cifrado de datos clínicos</span>
+                </div>
+
+              </div>
+
+              <!-- Botón de acceso -->
+              <a href="{% url 'login' %}?role=doctor" style="
+                display:flex;align-items:center;justify-content:center;gap:8px;
+                background:#ffffff;color:#0891B2;
+                padding:13px 20px;border-radius:10px;
+                font-weight:700;font-size:0.95rem;text-decoration:none;
+                transition:background 200ms;
+                min-height:48px;
+              ">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                Ingresar al portal médico
+              </a>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <style>
+        #portal-medico .section-title { display:none; }
+        @media (max-width: 575px) {
+          #portal-medico .container { padding-top: 48px; padding-bottom: 48px; }
+        }
+        #portal-medico { padding: 80px 0; }
+      </style>
+
+    </section><!-- /Doctor Portal Section -->
 
     <!-- Faq Section -->
     <section id="faq" class="faq section light-background">
@@ -1162,6 +1484,67 @@
 
   <!-- Main JS File -->
   <script src="{% static 'assets/js/main.js' %}"></script>
+
+  <!-- Menú drawer móvil accesible -->
+  <script>
+  (function () {
+    var toggle  = document.getElementById('am-toggle');
+    var overlay = document.getElementById('am-overlay');
+    var drawer  = document.getElementById('am-drawer');
+    var closeBtn= document.getElementById('am-close');
+    var FOCUSABLE = 'a[href],button:not([disabled]),[tabindex="0"]';
+
+    function openMenu() {
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.classList.add('open');
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+      overlay.removeAttribute('aria-hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { if (closeBtn) closeBtn.focus(); }, 290);
+    }
+
+    function closeMenu() {
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.classList.remove('open');
+      overlay.classList.remove('open');
+      drawer.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      toggle.focus();
+    }
+
+    if (toggle) toggle.addEventListener('click', function () {
+      drawer.classList.contains('open') ? closeMenu() : openMenu();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (overlay)  overlay.addEventListener('click', closeMenu);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) closeMenu();
+    });
+
+    // Cerrar al pulsar un enlace ancla dentro del drawer
+    if (drawer) drawer.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener('click', closeMenu);
+    });
+
+    // Trampa de foco
+    if (drawer) drawer.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var items = Array.from(drawer.querySelectorAll(FOCUSABLE)).filter(function (el) {
+        return !el.disabled && el.offsetParent !== null;
+      });
+      if (!items.length) return;
+      var first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    });
+  })();
+  </script>
 
 </body>
 
